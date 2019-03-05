@@ -1,0 +1,4 @@
+pipdeptree==0.13.2
+pkg-resources==0.0.0
+twine==1.13.0
+wheel==0.33.1
