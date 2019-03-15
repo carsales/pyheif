@@ -1,5 +1,5 @@
 #!/bin/bash
 
 rm dist/*
-python setup.py sdist bdist_wheel
+python setup.py sdist
 twine upload dist/*
