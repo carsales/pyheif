@@ -6,6 +6,7 @@ FROM quay.io/pypa/manylinux2010_x86_64
 
 # setup
 RUN set -ex \
+    && yum install wget -y \
     && mkdir /build-tools
 
 # pkg-config
@@ -148,6 +149,6 @@ COPY ./ /pyheif/
 ARG PYPI_USERNAME
 ARG PYPI_PASSWORD
 RUN set -ex \
-    && declare -a pythons=("34" "35" "36") \
+    && declare -a pythons=("34" "35" "36" "37") \
     && for PY in "${pythons[@]}"; do cd "/opt/python/cp${PY}-cp${PY}m/bin/" && ./pip install --upgrade pip auditwheel twine && ./pip wheel /pyheif -w /wheelhouse/ && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2010_x86_64 -w /wheelhouse && ./twine upload /wheelhouse/*manylinux2010*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} && rm /wheelhouse/*; done \
 
