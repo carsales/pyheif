@@ -22,6 +22,18 @@ int heif_image_handle_get_height(
 int heif_image_handle_has_alpha_channel(
     const struct heif_image_handle*);
 
+struct heif_decoding_options
+{
+  uint8_t version;
+  uint8_t ignore_transformations;
+  void (*start_progress)(enum heif_progress_step step, int max_progress, void* progress_user_data);
+  void (*on_progress)(enum heif_progress_step step, int progress, void* progress_user_data);
+  void (*end_progress)(enum heif_progress_step step, void* progress_user_data);
+  void* progress_user_data;
+};
+struct heif_decoding_options* heif_decoding_options_alloc();
+void heif_decoding_options_free(struct heif_decoding_options*);
+
 struct heif_error heif_decode_image(
     const struct heif_image_handle* in_handle,
     struct heif_image** out_img,

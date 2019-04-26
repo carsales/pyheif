@@ -72,11 +72,14 @@ def _read_heif_handle(handle):
     metadata = _read_metadata(handle)    
     color_profile = _read_color_profile(handle)
 
-    p_img = ffi.new('struct heif_image **');
+    p_img = ffi.new('struct heif_image **')
+    p_options = lib.heif_decoding_options_alloc()
+    p_options.ignore_transformations=1
     error = lib.heif_decode_image(
             handle, p_img, heif_colorspace_RGB, 
             heif_chroma_interleaved_RGB if mode=='RGB' else heif_chroma_interleaved_RGBA, 
-            ffi.NULL)
+            p_options)
+    lib.heif_decoding_options_free(p_options)
     if error.code != 0:
         raise HeifError(code=error.code, subcode=error.subcode, message=ffi.string(error.message).decode())
     img = p_img[0]
