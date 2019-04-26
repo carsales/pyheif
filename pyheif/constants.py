@@ -20,3 +20,11 @@ heif_channel_B = 5
 heif_channel_Alpha = 6
 heif_channel_interleaved = 10
 
+def encode_fourcc(fourcc):
+    encoded = ord(fourcc[0])<<24 | ord(fourcc[1])<<16 | ord(fourcc[2])<<8 | ord(fourcc[3])
+    return encoded
+heif_color_profile_type_not_present = 0
+heif_color_profile_type_nclx = encode_fourcc('nclx')
+heif_color_profile_type_rICC = encode_fourcc('rICCC')
+heif_color_profile_type_prof = encode_fourcc('prof')
+
