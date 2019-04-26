@@ -13,7 +13,7 @@ class HeifFile:
         self.color_profile=color_profile
 
 
-def read_heif(fp):
+def read_heif(fp, ignore_transformations=True):
     if isinstance(fp, str):
         with open(fp, 'rb') as f:
             d = f.read()
@@ -26,14 +26,14 @@ def read_heif(fp):
     else:
         raise ArgumentException('Input must be file name, bytes, byte array, or file-like object')
 
-    result = _read_heif_bytes(d)
+    result = _read_heif_bytes(d, ignore_transformations)
     return result
 
 
-def _read_heif_bytes(d):
+def _read_heif_bytes(d, ignore_transformations):
     ctx = lib.heif_context_alloc()
     try: 
-        result = _read_heif_context(ctx, d)
+        result = _read_heif_context(ctx, d, ignore_transformations)
     except:
         raise
     finally:
@@ -41,7 +41,7 @@ def _read_heif_bytes(d):
     return result
 
 
-def _read_heif_context(ctx, d):
+def _read_heif_context(ctx, d, ignore_transformations):
     error = lib.heif_context_read_from_memory(ctx, d, len(d), ffi.NULL)
     if error.code != 0:
         raise HeifError(code=error.code, subcode=error.subcode, message=ffi.string(error.message).decode())
@@ -53,7 +53,7 @@ def _read_heif_context(ctx, d):
     handle = p_handle[0]
 
     try:
-        result = _read_heif_handle(handle)
+        result = _read_heif_handle(handle, ignore_transformations)
     except:
         raise
     finally:
@@ -61,7 +61,7 @@ def _read_heif_context(ctx, d):
     return result
 
 
-def _read_heif_handle(handle):
+def _read_heif_handle(handle, ignore_transformations):
     width = lib.heif_image_handle_get_width(handle)
     height = lib.heif_image_handle_get_height(handle)
     size = (width, height)
@@ -74,7 +74,8 @@ def _read_heif_handle(handle):
 
     p_img = ffi.new('struct heif_image **')
     p_options = lib.heif_decoding_options_alloc()
-    p_options.ignore_transformations=1
+    if ignore_transformations:
+        p_options.ignore_transformations=1
     error = lib.heif_decode_image(
             handle, p_img, heif_colorspace_RGB, 
             heif_chroma_interleaved_RGB if mode=='RGB' else heif_chroma_interleaved_RGBA, 
