@@ -13,7 +13,7 @@ class HeifFile:
         self.color_profile=color_profile
 
 
-def read_heif(fp, ignore_transformations=True):
+def read_heif(fp, apply_transformations=True):
     if isinstance(fp, str):
         with open(fp, 'rb') as f:
             d = f.read()
@@ -26,14 +26,14 @@ def read_heif(fp, ignore_transformations=True):
     else:
         raise ArgumentException('Input must be file name, bytes, byte array, or file-like object')
 
-    result = _read_heif_bytes(d, ignore_transformations)
+    result = _read_heif_bytes(d, apply_transformations)
     return result
 
 
-def _read_heif_bytes(d, ignore_transformations):
+def _read_heif_bytes(d, apply_transformations):
     ctx = lib.heif_context_alloc()
     try: 
-        result = _read_heif_context(ctx, d, ignore_transformations)
+        result = _read_heif_context(ctx, d, apply_transformations)
     except:
         raise
     finally:
@@ -41,7 +41,7 @@ def _read_heif_bytes(d, ignore_transformations):
     return result
 
 
-def _read_heif_context(ctx, d, ignore_transformations):
+def _read_heif_context(ctx, d, apply_transformations):
     error = lib.heif_context_read_from_memory(ctx, d, len(d), ffi.NULL)
     if error.code != 0:
         raise HeifError(code=error.code, subcode=error.subcode, message=ffi.string(error.message).decode())
@@ -53,7 +53,7 @@ def _read_heif_context(ctx, d, ignore_transformations):
     handle = p_handle[0]
 
     try:
-        result = _read_heif_handle(handle, ignore_transformations)
+        result = _read_heif_handle(handle, apply_transformations)
     except:
         raise
     finally:
@@ -61,20 +61,13 @@ def _read_heif_context(ctx, d, ignore_transformations):
     return result
 
 
-def _read_heif_handle(handle, ignore_transformations):
-    width = lib.heif_image_handle_get_width(handle)
-    height = lib.heif_image_handle_get_height(handle)
-    size = (width, height)
-    
+def _read_heif_handle(handle, apply_transformations):
     alpha = lib.heif_image_handle_has_alpha_channel(handle)
     mode = 'RGB' if alpha==0 else 'RGBA'
 
-    metadata = _read_metadata(handle)    
-    color_profile = _read_color_profile(handle)
-
     p_img = ffi.new('struct heif_image **')
     p_options = lib.heif_decoding_options_alloc()
-    if ignore_transformations:
+    if apply_transformations==False:
         p_options.ignore_transformations=1
     error = lib.heif_decode_image(
             handle, p_img, heif_colorspace_RGB, 
@@ -85,6 +78,10 @@ def _read_heif_handle(handle, ignore_transformations):
         raise HeifError(code=error.code, subcode=error.subcode, message=ffi.string(error.message).decode())
     img = p_img[0]
     
+    width = lib.heif_image_handle_get_width(handle)
+    height = lib.heif_image_handle_get_height(handle)
+    size = (width, height)
+    
     try:
         data = _read_heif_image(img, height)
     except:
@@ -92,13 +89,15 @@ def _read_heif_handle(handle, ignore_transformations):
     finally:
         lib.heif_image_release(img)
 
+    metadata = _read_metadata(handle)    
+    color_profile = _read_color_profile(handle)
+
     heif_file = HeifFile(
             mode=mode, size=size, data=data, metadata=metadata, color_profile=color_profile)
     return heif_file
 
 
 def _read_metadata(handle):
-
     block_count = lib.heif_image_handle_get_number_of_metadata_blocks(handle, ffi.NULL)
     if block_count == 0:
         return
