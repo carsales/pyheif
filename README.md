@@ -2,7 +2,7 @@
 Python 3 interface to [libheif](https://github.com/strukturag/libheif) library
 
 ### Simple installation (requires libheif + libde265 + x265)
-```pip install libheif```
+```pip install pyheif```
 
 ### Installing from source - MacOS
 ```
