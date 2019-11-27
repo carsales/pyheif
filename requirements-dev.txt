@@ -1,5 +1,5 @@
 piexif==1.1.2
-Pillow==6.0.0
+Pillow==6.2.0
 pipdeptree==0.13.2
 pytest==4.4.1
 twine==1.13.0
