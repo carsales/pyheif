@@ -1,4 +1,4 @@
-FROM quay.io/pypa/manylinux2010_x86_64
+FROM quay.io/pypa/manylinux2014_x86_64
 
 ###############
 # Build tools #
@@ -21,10 +21,22 @@ RUN set -ex \
     && make install \
     && pkg-config --version
 
+# libressl
+RUN set -ex \
+    && cd /build-tools \
+    && LIBRESSL_VERSION="3.0.2" \
+    && wget https://github.com/libressl-portable/portable/archive/v${LIBRESSL_VERSION}.tar.gz \
+    && tar xvf v${LIBRESSL_VERSION}.tar.gz \
+    && cd portable-${LIBRESSL_VERSION} \
+    && ./autogen.sh \
+    && ./configure \
+    && make -j4 \
+    && make install
+
 # cmake
 RUN set -ex \
     && cd /build-tools \
-    && CMAKE_VERSION="3.13.4" \
+    && CMAKE_VERSION="3.16.2" \
     && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
     && tar xvf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
@@ -85,7 +97,7 @@ RUN set -ex \
 # x265
 RUN set -ex \
     && cd /build-deps \
-    && X265_VERSION="3.0" \
+    && X265_VERSION="3.2.1" \
     && wget https://bitbucket.org/multicoreware/x265/downloads/x265_${X265_VERSION}.tar.gz \
     && tar xvf x265_${X265_VERSION}.tar.gz \
     && cd x265_${X265_VERSION} \
@@ -97,9 +109,9 @@ RUN set -ex \
 # libde265
 RUN set -ex \
     && cd /build-deps \
-    && LIBDE265_VERSION="frame-parallel" \
-    && wget https://github.com/strukturag/libde265/archive/${LIBDE265_VERSION}.zip \
-    && unzip ${LIBDE265_VERSION}.zip \
+    && LIBDE265_VERSION="1.0.5" \
+    && wget https://github.com/strukturag/libde265/releases/download/v${LIBDE265_VERSION}/libde265-${LIBDE265_VERSION}.tar.gz \
+    && tar xvf libde265-${LIBDE265_VERSION}.tar.gz \
     && cd libde265-${LIBDE265_VERSION} \
     && ./autogen.sh \
     && ./configure --prefix /usr \
@@ -110,7 +122,7 @@ RUN set -ex \
 # libheif
 RUN set -ex \
     && cd /build-deps \
-    && LIBHEIF_VERSION="1.4.0" \
+    && LIBHEIF_VERSION="1.6.1" \
     && wget https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz \
     && tar xvf libheif-${LIBHEIF_VERSION}.tar.gz \
     && cd libheif-${LIBHEIF_VERSION} \
@@ -122,7 +134,7 @@ RUN set -ex \
 # libffi
 RUN set -ex \
     && cd /build-deps \
-    && LIBFFI_VERSION="3.2.1" \
+    && LIBFFI_VERSION="3.3" \
     && wget ftp://sourceware.org/pub/libffi/libffi-${LIBFFI_VERSION}.tar.gz \
     && tar xvf libffi-${LIBFFI_VERSION}.tar.gz \
     && cd libffi-${LIBFFI_VERSION} \
@@ -142,13 +154,37 @@ RUN set -ex \
 
 # setup
 RUN mkdir /wheelhouse
+RUN mkdir /repaired
 RUN mkdir /pyheif
 COPY ./ /pyheif/
 
 # build wheels
 ARG PYPI_USERNAME
 ARG PYPI_PASSWORD
+# python 3.6
 RUN set -ex \
-    && declare -a pythons=("34" "35" "36" "37") \
-    && for PY in "${pythons[@]}"; do cd "/opt/python/cp${PY}-cp${PY}m/bin/" && ./pip install --upgrade pip auditwheel twine && ./pip wheel /pyheif -w /wheelhouse/ && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2010_x86_64 -w /wheelhouse && ./twine upload /wheelhouse/*manylinux2010*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} && rm /wheelhouse/*; done \
+    && cd "/opt/python/cp36-cp36m/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
+# python 3.7
+RUN set -ex \
+    && cd "/opt/python/cp37-cp37m/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
+# python 3.8
+RUN set -ex \
+    && cd "/opt/python/cp38-cp38/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
+# upload
+RUN set -ex \
+    && cd "/opt/python/cp38-cp38/bin/" \
+    && ./pip install twine \
+    && ./twine upload /repaired/*manylinux2014*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} \
 

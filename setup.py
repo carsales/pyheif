@@ -5,14 +5,14 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='pyheif',
-    version='0.3.3',
+    version='0.4',
     packages=find_packages(),
     install_requires=['cffi>=1.0.0'],
     setup_requires=['cffi>=1.0.0'],
     cffi_modules=['libheif_build.py:ffibuilder'],
     author='David Poirier',
     author_email='david-poirier-csn@users.noreply.github.com',
-    description='Python 3 interface to libheif library',
+    description='Python 3.6+ interface to libheif library',
     long_description=long_description,
     long_description_content_type='text/markdown',
     python_requires=">= 3.6",
