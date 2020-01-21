@@ -1,5 +1,5 @@
 # pyheif
-Python 3 interface to [libheif](https://github.com/strukturag/libheif) library
+Python 3.6+ interface to [libheif](https://github.com/strukturag/libheif) library
 
 ### Simple installation (requires libheif + libde265 + x265)
 ```pip install pyheif```
