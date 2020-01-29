@@ -12,7 +12,7 @@ pip install git+https://github.com/david-poirier-csn/pyheif.git
 
 ### Installing from source - Linux
 ```
-yum|apt install libheif-dev libde264-dev x265-dev
+yum|apt install libheif-dev libde265-dev libx265-dev
 pip install git+https://github.com/david-poirier-csn/pyheif.git
 ```
 
