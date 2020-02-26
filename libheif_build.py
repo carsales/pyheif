@@ -2,6 +2,8 @@ from cffi import FFI
 ffibuilder = FFI()
 
 ffibuilder.cdef("""
+const char *heif_get_version(void);
+
 struct heif_context* heif_context_alloc(void);
 void heif_context_free(struct heif_context*);
 

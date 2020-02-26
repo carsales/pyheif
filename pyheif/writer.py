@@ -1,3 +1,4 @@
 
 def write_heif():
-    pass
+    raise Exception('not implemented')
+
