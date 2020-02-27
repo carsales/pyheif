@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from _libheif_cffi import ffi, lib
 from .constants import *
 from .error import HeifError
@@ -21,10 +23,12 @@ def read_heif(fp, apply_transformations=True):
         d = fp
     elif isinstance(fp, bytearray):
         d = bytes(fp)
+    elif isinstance(fp, Path):
+        d = fp.read_bytes()
     elif hasattr(fp, 'read'):
         d = fp.read()
     else:
-        raise ArgumentException('Input must be file name, bytes, byte array, or file-like object')
+        raise ArgumentException('Input must be file name, bytes, byte array, path or file-like object')
 
     result = _read_heif_bytes(d, apply_transformations)
     return result
@@ -32,7 +36,7 @@ def read_heif(fp, apply_transformations=True):
 
 def _read_heif_bytes(d, apply_transformations):
     ctx = lib.heif_context_alloc()
-    try: 
+    try:
         result = _read_heif_context(ctx, d, apply_transformations)
     except:
         raise
@@ -70,18 +74,18 @@ def _read_heif_handle(handle, apply_transformations):
     if apply_transformations==False:
         p_options.ignore_transformations=1
     error = lib.heif_decode_image(
-            handle, p_img, heif_colorspace_RGB, 
-            heif_chroma_interleaved_RGB if mode=='RGB' else heif_chroma_interleaved_RGBA, 
+            handle, p_img, heif_colorspace_RGB,
+            heif_chroma_interleaved_RGB if mode=='RGB' else heif_chroma_interleaved_RGBA,
             p_options)
     lib.heif_decoding_options_free(p_options)
     if error.code != 0:
         raise HeifError(code=error.code, subcode=error.subcode, message=ffi.string(error.message).decode())
     img = p_img[0]
-    
+
     width = lib.heif_image_handle_get_width(handle)
     height = lib.heif_image_handle_get_height(handle)
     size = (width, height)
-    
+
     try:
         data = _read_heif_image(img, height)
     except:
@@ -89,7 +93,7 @@ def _read_heif_handle(handle, apply_transformations):
     finally:
         lib.heif_image_release(img)
 
-    metadata = _read_metadata(handle)    
+    metadata = _read_metadata(handle)
     color_profile = _read_color_profile(handle)
 
     heif_file = HeifFile(
