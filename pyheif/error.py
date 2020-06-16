@@ -1,5 +1,5 @@
 
-class HeifError(BaseException):
+class HeifError(Exception):
     def __init__(self, *,
             code, subcode, message):
         self.code=code
