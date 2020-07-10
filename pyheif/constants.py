@@ -5,6 +5,8 @@ heif_chroma_422 = 2
 heif_chroma_444 = 3
 heif_chroma_interleaved_RGB = 10
 heif_chroma_interleaved_RGBA = 11
+heif_chroma_interleaved_RRGGBB_BE = 12
+heif_chroma_interleaved_RRGGBBAA_BE = 13
 
 heif_colorspace_undefined = 99
 heif_colorspace_YCbCr = 0
