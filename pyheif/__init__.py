@@ -1,10 +1,13 @@
-from _libheif_cffi import ffi, lib
-from .reader import read_heif
-from .writer import write_heif
+import _libheif_cffi
 
-__version__ = '0.5.0'
+from .reader import *
+from .writer import *
+
+
+__version__ = "0.5.0"
+
 
 def libheif_version():
-    version = lib.heif_get_version()
-    version = ffi.string(version).decode()
+    version = _libheif_cffi.lib.heif_get_version()
+    version = _libheif_cffi.ffi.string(version).decode()
     return version

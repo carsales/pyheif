@@ -97,7 +97,7 @@ RUN set -ex \
 # x265
 RUN set -ex \
     && cd /build-deps \
-    && X265_VERSION="3.2.1" \
+    && X265_VERSION="3.4" \
     && wget https://bitbucket.org/multicoreware/x265/downloads/x265_${X265_VERSION}.tar.gz \
     && tar xvf x265_${X265_VERSION}.tar.gz \
     && cd x265_${X265_VERSION} \
@@ -122,7 +122,7 @@ RUN set -ex \
 # libheif
 RUN set -ex \
     && cd /build-deps \
-    && LIBHEIF_VERSION="1.6.1" \
+    && LIBHEIF_VERSION="1.7.0" \
     && wget https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz \
     && tar xvf libheif-${LIBHEIF_VERSION}.tar.gz \
     && cd libheif-${LIBHEIF_VERSION} \

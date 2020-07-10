@@ -1,88 +1,104 @@
 import glob
 import io
 import os
+import pprint
 import sys
 from pathlib import Path
-sys.path.insert(0, os.path.abspath('.'))
+
+sys.path.insert(0, os.path.abspath("."))
 
 import piexif
+from PIL import Image, ImageCms
 import pyheif
-from PIL import ImageCms
 
 
 def test_read_file_names():
-    for fn in glob.glob('tests/images/*.heic'):
-        heif_file = pyheif.read_heif(fn)
-        assert(heif_file is not None)
-        assert(heif_file.mode in ['RGB', 'RGBA'])
+    for fn in glob.glob("tests/images/*.heic"):
+        heif_file = pyheif.read(fn)
+        assert heif_file is not None
         width, height = heif_file.size
-        assert(width > 0)
-        assert(height > 0)
-        assert(len(heif_file.data) > 0)
+        assert width > 0
+        assert height > 0
+        assert len(heif_file.data) > 0
 
 
 def test_read_paths():
-    for fp in Path('tests/images').glob('*.heic'):
-        heif_file = pyheif.read_heif(fp)
-        assert(heif_file is not None)
-        assert(heif_file.mode in ['RGB', 'RGBA'])
+    for fp in Path("tests/images").glob("*.heic"):
+        heif_file = pyheif.read(fp)
+        assert heif_file is not None
         width, height = heif_file.size
-        assert(width > 0)
-        assert(height > 0)
-        assert(len(heif_file.data) > 0)
+        assert width > 0
+        assert height > 0
+        assert len(heif_file.data) > 0
 
 
 def test_read_file_objects():
-    for fn in glob.glob('tests/images/*.heic'):
-        with open(fn, 'rb') as f:
-            heif_file = pyheif.read_heif(f)
-            assert(heif_file is not None)
-            assert(heif_file.mode in ['RGB', 'RGBA'])
+    for fn in glob.glob("tests/images/*.heic"):
+        with open(fn, "rb") as f:
+            heif_file = pyheif.read(f)
+            assert heif_file is not None
             width, height = heif_file.size
-            assert(width > 0)
-            assert(height > 0)
-            assert(len(heif_file.data) > 0)
+            assert width > 0
+            assert height > 0
+            assert len(heif_file.data) > 0
 
-def test_read_file_bytes():
-    for fn in glob.glob('tests/images/*.heic'):
-        with open(fn, 'rb') as f:
+
+def test_read_bytes():
+    for fn in glob.glob("tests/images/*.heic"):
+        with open(fn, "rb") as f:
             d = f.read()
-            heif_file = pyheif.read_heif(d)
-            assert(heif_file is not None)
-            assert(heif_file.mode in ['RGB', 'RGBA'])
+            heif_file = pyheif.read(d)
+            assert heif_file is not None
             width, height = heif_file.size
-            assert(width > 0)
-            assert(height > 0)
-            assert(len(heif_file.data) > 0)
+            assert width > 0
+            assert height > 0
+            assert len(heif_file.data) > 0
 
-def test_read_file_bytearrays():
-    for fn in glob.glob('tests/images/*.heic'):
-        with open(fn, 'rb') as f:
+
+def test_read_bytearrays():
+    for fn in glob.glob("tests/images/*.heic"):
+        with open(fn, "rb") as f:
             d = f.read()
             d = bytearray(d)
-            heif_file = pyheif.read_heif(d)
-            assert(heif_file is not None)
-            assert(heif_file.mode in ['RGB', 'RGBA'])
+            heif_file = pyheif.read(d)
+            assert heif_file is not None
             width, height = heif_file.size
-            assert(width > 0)
-            assert(height > 0)
-            assert(len(heif_file.data) > 0)
+            assert width > 0
+            assert height > 0
+            assert len(heif_file.data) > 0
 
-def test_read_file_exif_metadata():
-    for fn in glob.glob('tests/images/*.heic'):
-        heif_file = pyheif.read_heif(fn)
+
+def test_read_exif_metadata():
+    for fn in glob.glob("tests/images/*.heic"):
+        heif_file = pyheif.read(fn)
         for m in heif_file.metadata or []:
-            if m['type']=='Exif':
-                exif_dict = piexif.load(m['data'])
-                assert('0th' in exif_dict)
-                assert(len(exif_dict['0th']) > 0)
-                assert('Exif' in exif_dict)
-                assert(len(exif_dict['Exif']) > 0)
+            if m["type"] == "Exif":
+                exif_dict = piexif.load(m["data"])
+                assert "0th" in exif_dict
+                assert len(exif_dict["0th"]) > 0
+                assert "Exif" in exif_dict
+                assert len(exif_dict["Exif"]) > 0
 
-def test_read_file_icc_color_profile():
-    for fn in glob.glob('tests/images/*.heic'):
-        heif_file = pyheif.read_heif(fn)
-        if heif_file.color_profile and heif_file.color_profile['type'] in ['prof','rICC']:
-            profile = io.BytesIO(heif_file.color_profile['data'])
+
+def test_read_icc_color_profile():
+    for fn in glob.glob("tests/images/*.heic"):
+        heif_file = pyheif.read(fn)
+        if heif_file.color_profile and heif_file.color_profile["type"] in [
+            "prof",
+            "rICC",
+        ]:
+            profile = io.BytesIO(heif_file.color_profile["data"])
             cms = ImageCms.getOpenProfile(profile)
 
+
+def test_read_pillow_frombytes():
+    for fn in glob.glob("tests/images/*.heic"):
+        heif_file = pyheif.read(fn)
+        image = Image.frombytes(
+            heif_file.mode,
+            heif_file.size,
+            heif_file.data,
+            "raw",
+            heif_file.mode,
+            heif_file.stride,
+        )
