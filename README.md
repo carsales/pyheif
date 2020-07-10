@@ -66,7 +66,7 @@ The returned `HeifFile` has the following properties:
 
 ### Converting to a Pillow Image object
 
-If your HEIF file contains an image that you would like to manipulate, you can do so using the [Pillow](https://pillow.readthedocs.io/) Python library. You can convert a `heif_file` to a Pillow image like so:
+If your HEIF file contains an image that you would like to manipulate, you can do so using the [Pillow](https://pillow.readthedocs.io/) Python library. You can convert a `HeifFile` to a Pillow image like so:
 
 ```python
 from PIL import Image
