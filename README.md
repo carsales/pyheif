@@ -1,9 +1,11 @@
 # pyheif
 Python 3.6+ interface to [libheif](https://github.com/strukturag/libheif) library using CFFI
 
+*Note*: currently only reading is supported.
+
 ## Installation
 
-### Simple installation (requires libheif + libde265 + x265)
+### Simple installation - Linux (installs manylinux2014 wheel, doesn't work with Alpine)
 ```pip install pyheif```
 
 ### Installing from source - MacOS
@@ -14,11 +16,11 @@ pip install git+https://github.com/david-poirier-csn/pyheif.git
 
 ### Installing from source - Linux
 ```
-apt install libffi libheif-dev libde265-dev x265-dev
+apt install libffi libheif-dev libde265-dev
 ```
 or
 ```
-yum install libffi libheif-devel libde265-devel x265-devel
+yum install libffi libheif-devel libde265-devel
 ```
 then
 ```
@@ -32,7 +34,7 @@ Sorry, not going to happen!
 
 ## Usage
 
-The `pyheif.read_heif(path_or_bytes)` function can be used to read a HEIF encoded file. It can be passed any of the following:
+The `pyheif.read(path_or_bytes)` function can be used to read a HEIF encoded file. It can be passed any of the following:
 
 * A string path to a file on disk
 * A `pathlib.Path` path object
@@ -45,20 +47,22 @@ It returns a `HeifFile` object.
 import pyheif
 
 # Using a file path:
-heif_file = pyheif.read_heif("IMG_7424.HEIC")
+heif_file = pyheif.read("IMG_7424.HEIC")
 # Or using bytes directly:
-heif_file = pyheif.read_heif(open("IMG_7424.HEIC", "rb").read())
+heif_file = pyheif.read(open("IMG_7424.HEIC", "rb").read())
 ```
 
 ### The HeifFile object
 
 The returned `HeifFile` has the following properties:
 
-* `heif_file.mode` - the image mode, e.g. "RGB"
-* `heif_file.size` - the size of the image as a `(width, height)` tuple of integers
-* `heif_file.data` - the raw decoded file data, as bytes
-* `heif_file.metadata` - a list of metadata dictionaries
-* `heif_file.color_profile` - a color profile dictionary
+* `mode` - the image mode, e.g. "RGB" or "RGBA"
+* `size` - the size of the image as a `(width, height)` tuple of integers
+* `data` - the raw decoded file data, as bytes
+* `metadata` - a list of metadata dictionaries
+* `color_profile` - a color profile dictionary
+* `stride` - the number of bytes in a row of decoded file data
+* `bit_depth` - the number of bits in each component of a pixel
 
 ### Converting to a Pillow Image object
 
@@ -68,9 +72,18 @@ If your HEIF file contains an image that you would like to manipulate, you can d
 from PIL import Image
 import pyheif
 
-heif_file = pyheif.read_heif("IMG_7424.HEIC")
-image = Image.frombytes(mode=heif_file.mode, size=heif_file.size, data=heif_file.data)
+heif_file = pyheif.read("IMG_7424.HEIC")
+image = Image.frombytes(
+    heif_file.mode, 
+    heif_file.size, 
+    heif_file.data,
+    "raw",
+    heif_file.mode,
+    heif_file.stride,
+    )
 ```
+
+*Note*: the `mode` property is passed twice - once to the `mode` argument of the `frombytes` method, and again to the `mode` argument of the `raw` decoder.
 
 You can now use any Pillow method to manipulate the file. Here's how to convert it to JPEG:
 

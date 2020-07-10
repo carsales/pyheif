@@ -1,2 +1,2 @@
-def write_heif():
+def write():
     raise Exception("not implemented")
