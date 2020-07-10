@@ -100,7 +100,7 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
     has_alpha = bool(_libheif_cffi.lib.heif_image_handle_has_alpha_channel(handle))
     bit_depth = _libheif_cffi.lib.heif_image_handle_get_luma_bits_per_pixel(handle)
     colorspace = _constants.heif_colorspace_RGB
-    if bit_depth == 8:
+    if convert_hdr_to_8bit or bit_depth <= 8:
         if has_alpha:
             chroma = _constants.heif_chroma_interleaved_RGBA
         else:

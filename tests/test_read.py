@@ -102,3 +102,16 @@ def test_read_pillow_frombytes():
             heif_file.mode,
             heif_file.stride,
         )
+
+
+def test_read_10_bit():
+    for fn in glob.glob("tests/images/*.HIF"):
+        heif_file = pyheif.read(fn)
+        image = Image.frombytes(
+            heif_file.mode,
+            heif_file.size,
+            heif_file.data,
+            "raw",
+            heif_file.mode,
+            heif_file.stride,
+        )
