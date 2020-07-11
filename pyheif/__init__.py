@@ -1,10 +1,14 @@
+import os
+
 import _libheif_cffi
 
+from .constants import *
 from .reader import *
 from .writer import *
 
-
-__version__ = "0.5.0"
+version_path = os.path.dirname(os.path.abspath(__file__)) + "/version.txt"
+with open(version_path) as f:
+    __version__ = f.read().strip()
 
 
 def libheif_version():

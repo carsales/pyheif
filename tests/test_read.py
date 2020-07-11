@@ -12,6 +12,12 @@ from PIL import Image, ImageCms
 import pyheif
 
 
+def test_check_filetype():
+    for fn in glob.glob("tests/images/*.heic"):
+        filetype = pyheif.check(fn)
+        assert pyheif.heif_filetype_no != filetype
+
+
 def test_read_file_names():
     for fn in glob.glob("tests/images/*.heic"):
         heif_file = pyheif.read(fn)
@@ -102,6 +108,7 @@ def test_read_pillow_frombytes():
             heif_file.mode,
             heif_file.stride,
         )
+        #image.save(f"{fn}.png")
 
 
 def test_read_10_bit():

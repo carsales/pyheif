@@ -3,9 +3,12 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("pyheif/version.txt") as f:
+    version = f.read().strip()
+
 setup(
     name="pyheif",
-    version="0.5.0",
+    version=version,
     packages=find_packages(),
     install_requires=["cffi>=1.0.0"],
     setup_requires=["cffi>=1.0.0"],
