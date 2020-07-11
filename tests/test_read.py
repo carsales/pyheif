@@ -108,7 +108,7 @@ def test_read_pillow_frombytes():
             heif_file.mode,
             heif_file.stride,
         )
-        #image.save(f"{fn}.png")
+        # image.save(f"{fn}.png")
 
 
 def test_read_10_bit():

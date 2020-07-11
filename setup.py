@@ -9,8 +9,8 @@ with open("pyheif/data/version.txt") as f:
 setup(
     name="pyheif",
     version=version,
-    packages=['pyheif'],
-    package_data={'pyheif': ['data/*']},
+    packages=["pyheif"],
+    package_data={"pyheif": ["data/*"]},
     install_requires=["cffi>=1.0.0"],
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["libheif/libheif_build.py:ffibuilder"],
