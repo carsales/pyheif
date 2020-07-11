@@ -3,13 +3,14 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("pyheif/version.txt") as f:
+with open("pyheif/data/version.txt") as f:
     version = f.read().strip()
 
 setup(
     name="pyheif",
     version=version,
-    packages=find_packages(),
+    packages=['pyheif'],
+    package_data={'pyheif': ['data/*']},
     install_requires=["cffi>=1.0.0"],
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["libheif/libheif_build.py:ffibuilder"],

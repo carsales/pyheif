@@ -12,7 +12,7 @@ def test_libheif_version():
 
 
 def test_pyheif_version():
-    with open("pyheif/version.txt") as f:
+    with open("pyheif/data/version.txt") as f:
         expected_version = f.read().strip()
 
     version = pyheif.__version__
