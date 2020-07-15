@@ -21,8 +21,8 @@ class HeifFile:
 
 
 def check(fp):
-    d = _get_bytes(fp)
-    magic = d[:12]
+    data = _get_bytes(fp)
+    magic = data[:12]
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
     return filetype_check
 
@@ -41,35 +41,35 @@ def read(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
 def _get_bytes(fp):
     if isinstance(fp, str):
         with open(fp, "rb") as f:
-            d = f.read()
+            data = f.read()
     elif isinstance(fp, bytearray):
-        d = bytes(fp)
+        data = bytes(fp)
     elif isinstance(fp, pathlib.Path):
-        d = fp.read_bytes()
+        data = fp.read_bytes()
     elif hasattr(fp, "read"):
-        d = fp.read()
+        data = fp.read()
     else:
-        d = fp
+        data = fp
 
-    if not isinstance(d, bytes):
+    if not isinstance(data, bytes):
         raise ValueError(
             "Input must be file name, bytes, byte array, path or file-like object"
         )
 
-    return d
+    return data
 
 
-def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
-    magic = d[:12]
+def _read_heif_bytes(data, apply_transformations, convert_hdr_to_8bit):
+    magic = data[:12]
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
     if filetype_check == _constants.heif_filetype_no:
-        raise ValueError("Input is not a HEIF/AVIF file")
+        raise ValueError("Input is not a HEIF file")
     elif filetype_check == _constants.heif_filetype_yes_unsupported:
-        warnings.warn("Input is an unsupported HEIF/AVIF file type - trying anyway!")
+        warnings.warn("Input is an unsupported HEIF file type - trying anyway!")
 
     ctx = _libheif_cffi.lib.heif_context_alloc()
     try:
-        result = _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit)
+        result = _read_heif_context(ctx, data, apply_transformations, convert_hdr_to_8bit)
     finally:
         _libheif_cffi.lib.heif_context_free(ctx)
     return result
