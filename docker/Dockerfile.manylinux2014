@@ -24,7 +24,7 @@ RUN set -ex \
 # libressl
 RUN set -ex \
     && cd /build-tools \
-    && LIBRESSL_VERSION="3.0.2" \
+    && LIBRESSL_VERSION="3.1.3" \
     && wget https://github.com/libressl-portable/portable/archive/v${LIBRESSL_VERSION}.tar.gz \
     && tar xvf v${LIBRESSL_VERSION}.tar.gz \
     && cd portable-${LIBRESSL_VERSION} \
@@ -36,7 +36,7 @@ RUN set -ex \
 # cmake
 RUN set -ex \
     && cd /build-tools \
-    && CMAKE_VERSION="3.16.2" \
+    && CMAKE_VERSION="3.16.8" \
     && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
     && tar xvf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
@@ -72,7 +72,7 @@ RUN set -ex \
 # nasm
 RUN set -ex \
     && cd /build-tools \
-    && NASM_VERSION="2.14.02" \
+    && NASM_VERSION="2.15.02" \
     && wget https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/nasm-${NASM_VERSION}.tar.gz \
     && tar xvf nasm-${NASM_VERSION}.tar.gz \
     && cd nasm-${NASM_VERSION} \
@@ -115,6 +115,19 @@ RUN set -ex \
     && cd libde265-${LIBDE265_VERSION} \
     && ./autogen.sh \
     && ./configure --prefix /usr \
+    && make -j4 \
+    && make install \
+    && ldconfig
+
+# libaom v2.0
+RUN set -ex \
+    && cd /build-deps \
+    && LIBAOM_COMMIT="bb35ba9148543f22ba7d8642e4fbd29ae301f5dc" \
+    && mkdir -v aom && mkdir -v aom_build && cd aom \
+    && wget "https://aomedia.googlesource.com/aom/+archive/${LIBAOM_COMMIT}.tar.gz" \
+    && tar xvf ${LIBAOM_COMMIT}.tar.gz \
+    && cd ../aom_build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=1 ../aom \
     && make -j4 \
     && make install \
     && ldconfig
