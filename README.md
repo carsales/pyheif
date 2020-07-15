@@ -1,7 +1,7 @@
 # pyheif
 Python 3.6+ interface to [libheif](https://github.com/strukturag/libheif) library using CFFI
 
-*Note*: currently only reading is supported.
+Supports reading and writing HEIC and AVIF files
 
 ## Installation
 
@@ -16,16 +16,17 @@ pip install git+https://github.com/david-poirier-csn/pyheif.git
 
 ### Installing from source - Linux
 ```
-apt install libffi libheif-dev libde265-dev
+apt install libffi libheif-dev libde265-dev x265-dev libaom-dev
 ```
 or
 ```
-yum install libffi libheif-devel libde265-devel
+yum install libffi libheif-devel libde265-devel x265-devel libaom-devel
 ```
 then
 ```
 pip install git+https://github.com/david-poirier-csn/pyheif.git
 ```
+...and if this doesn't work it's probably due to your dependencies being out of date - you'll need to download them and build from source!
 
 ### Installing from source - Windows
 ```
