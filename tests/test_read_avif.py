@@ -109,5 +109,3 @@ def test_read_pillow_frombytes():
             heif_file.stride,
         )
         # image.save(f"{fn}.png")
-
-

@@ -67,17 +67,19 @@ def _read_heif_bytes(data, apply_transformations, convert_hdr_to_8bit):
     elif filetype_check == _constants.heif_filetype_yes_unsupported:
         warnings.warn("Input is an unsupported HEIF file type - trying anyway!")
 
-    ctx = _libheif_cffi.lib.heif_context_alloc()
+    context = _libheif_cffi.lib.heif_context_alloc()
     try:
-        result = _read_heif_context(ctx, data, apply_transformations, convert_hdr_to_8bit)
+        result = _read_heif_context(
+            context, data, apply_transformations, convert_hdr_to_8bit
+        )
     finally:
-        _libheif_cffi.lib.heif_context_free(ctx)
+        _libheif_cffi.lib.heif_context_free(context)
     return result
 
 
-def _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit):
+def _read_heif_context(context, data, apply_transformations, convert_hdr_to_8bit):
     error = _libheif_cffi.lib.heif_context_read_from_memory_without_copy(
-        ctx, d, len(d), _libheif_cffi.ffi.NULL
+        context, data, len(data), _libheif_cffi.ffi.NULL
     )
     if error.code != 0:
         raise _error.HeifError(
@@ -87,7 +89,7 @@ def _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit):
         )
 
     p_handle = _libheif_cffi.ffi.new("struct heif_image_handle **")
-    error = _libheif_cffi.lib.heif_context_get_primary_image_handle(ctx, p_handle)
+    error = _libheif_cffi.lib.heif_context_get_primary_image_handle(context, p_handle)
     if error.code != 0:
         raise _error.HeifError(
             code=error.code,
