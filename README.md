@@ -16,6 +16,7 @@ pip install git+https://github.com/david-poirier-csn/pyheif.git
 
 ### Installing from source - Linux
 ```
+sudo add-apt-repository ppa:strukturag/libheif
 apt install libffi libheif-dev libde265-dev
 ```
 or
