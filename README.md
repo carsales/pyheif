@@ -11,7 +11,7 @@ Python 3.6+ interface to [libheif](https://github.com/strukturag/libheif) librar
 ### Installing from source - MacOS
 ```
 brew install libffi libheif
-pip install git+https://github.com/david-poirier-csn/pyheif.git
+pip install git+https://github.com/carsales/pyheif.git
 ```
 
 ### Installing from source - Linux
@@ -24,7 +24,7 @@ yum install libffi libheif-devel libde265-devel
 ```
 then
 ```
-pip install git+https://github.com/david-poirier-csn/pyheif.git
+pip install git+https://github.com/carsales/pyheif.git
 ```
 
 ### Installing from source - Windows
