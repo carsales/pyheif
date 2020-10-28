@@ -25,6 +25,7 @@ def test_read_file_names():
         width, height = heif_file.size
         assert width > 0
         assert height > 0
+        assert heif_file.brand != pyheif.constants.heif_brand_unknown_brand
         assert len(heif_file.data) > 0
 
 
@@ -35,6 +36,7 @@ def test_read_paths():
         width, height = heif_file.size
         assert width > 0
         assert height > 0
+        assert heif_file.brand != pyheif.constants.heif_brand_unknown_brand
         assert len(heif_file.data) > 0
 
 
@@ -46,6 +48,7 @@ def test_read_file_objects():
             width, height = heif_file.size
             assert width > 0
             assert height > 0
+            assert heif_file.brand != pyheif.constants.heif_brand_unknown_brand
             assert len(heif_file.data) > 0
 
 
@@ -58,6 +61,7 @@ def test_read_bytes():
             width, height = heif_file.size
             assert width > 0
             assert height > 0
+            assert heif_file.brand != pyheif.constants.heif_brand_unknown_brand
             assert len(heif_file.data) > 0
 
 
@@ -71,6 +75,7 @@ def test_read_bytearrays():
             width, height = heif_file.size
             assert width > 0
             assert height > 0
+            assert heif_file.brand != pyheif.constants.heif_brand_unknown_brand
             assert len(heif_file.data) > 0
 
 
