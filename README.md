@@ -6,7 +6,10 @@ Python 3.6+ interface to [libheif](https://github.com/strukturag/libheif) librar
 ## Installation
 
 ### Simple installation - Linux (installs manylinux2014 wheel, doesn't work with Alpine)
-```pip install pyheif```
+```
+pip install --upgrade pip
+pip install pyheif
+```
 
 ### Installing from source - MacOS
 ```
