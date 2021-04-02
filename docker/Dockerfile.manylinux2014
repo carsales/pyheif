@@ -1,4 +1,4 @@
-FROM quay.io/pypa/manylinux2014_x86_64
+FROM quay.io/pypa/manylinux2014_x86_64:2021-03-24-f395ab8
 
 ###############
 # Build tools #
@@ -36,7 +36,7 @@ RUN set -ex \
 # cmake
 RUN set -ex \
     && cd /build-tools \
-    && CMAKE_VERSION="3.16.8" \
+    && CMAKE_VERSION="3.20.0" \
     && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
     && tar xvf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
@@ -97,8 +97,8 @@ RUN set -ex \
 # x265
 RUN set -ex \
     && cd /build-deps \
-    && X265_VERSION="3.4" \
-    && wget https://bitbucket.org/multicoreware/x265/downloads/x265_${X265_VERSION}.tar.gz \
+    && X265_VERSION="3.5" \
+    && wget https://bitbucket.org/multicoreware/x265_git/downloads/x265_${X265_VERSION}.tar.gz \
     && tar xvf x265_${X265_VERSION}.tar.gz \
     && cd x265_${X265_VERSION} \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr -G "Unix Makefiles" ./source \
@@ -195,9 +195,15 @@ RUN set -ex \
     && ./pip wheel /pyheif -w /wheelhouse/ \
     && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
     && rm /wheelhouse/*
+# python 3.9
+RUN set -ex \
+    && cd "/opt/python/cp39-cp39/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
 # upload
 RUN set -ex \
     && cd "/opt/python/cp38-cp38/bin/" \
     && ./pip install twine \
     && ./twine upload /repaired/*manylinux2014*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} \
-
