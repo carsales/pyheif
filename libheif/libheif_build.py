@@ -12,8 +12,19 @@ ffibuilder.set_source(
     """
      #include "libheif/heif.h"
     """,
-    include_dirs=["/usr/local/include", "/usr/include", "/opt/local/include"],
-    library_dirs=["/usr/local/lib", "/usr/lib", "/lib", "/opt/local/lib"],
+    include_dirs=[
+        "/usr/local/include",
+        "/usr/include",
+        "/opt/local/include",
+        "/opt/homebrew/include",
+    ],
+    library_dirs=[
+        "/usr/local/lib",
+        "/usr/lib",
+        "/lib",
+        "/opt/local/lib",
+        "/opt/homebrew/lib",
+    ],
     libraries=["heif"],
 )
 
