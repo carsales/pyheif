@@ -10,10 +10,10 @@ with open("libheif/heif.h") as f:
 include_dirs = ["/usr/local/include", "/usr/include", "/opt/local/include"]
 library_dirs = ["/usr/local/lib", "/usr/lib", "/lib", "/opt/local/lib"]
 
-homebrew_path = os.getenv('HOMEBREW_PREFIX')
-if homebrew_path:
-    include_dirs.append(os.path.join(homebrew_path, "include"))
-    library_dirs.append(os.path.join(homebrew_path, "lib"))
+homebrew_prefix = os.getenv("HOMEBREW_PREFIX")
+if homebrew_prefix:
+    include_dirs.append(os.path.join(homebrew_prefix, "include"))
+    library_dirs.append(os.path.join(homebrew_prefix, "lib"))
 
 ffibuilder.set_source(
     "_libheif_cffi",
