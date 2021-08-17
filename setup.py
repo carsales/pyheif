@@ -21,8 +21,6 @@ def get_version(rel_path):
         raise RuntimeError("Unable to find version string.")
 
 
-# with open("pyheif/data/version.txt") as f:
-#    version = f.read().strip()
 version = get_version("pyheif/__init__.py")
 
 setup(
