@@ -205,20 +205,28 @@ def _read_color_profile(handle):
     color_profile = {"type": "unknown", "data": None}
     if profile_type == _constants.heif_color_profile_type_nclx:
         color_profile["type"] = "nclx"
-    elif profile_type == _constants.heif_color_profile_type_rICC:
-        color_profile["type"] = "rICC"
-    elif profile_type == _constants.heif_color_profile_type_prof:
-        color_profile["type"] = "prof"
-    data_length = _libheif_cffi.lib.heif_image_handle_get_raw_color_profile_size(handle)
-    p_data = _libheif_cffi.ffi.new("char[]", data_length)
-    error = _libheif_cffi.lib.heif_image_handle_get_raw_color_profile(handle, p_data)
+        p_data = _libheif_cffi.ffi.new("struct heif_color_profile_nclx * *")
+        error = _libheif_cffi.lib.heif_image_handle_get_nclx_color_profile(handle, p_data)
+        data_buffer = _libheif_cffi.ffi.buffer(p_data)
+
+    else:
+        if profile_type == _constants.heif_color_profile_type_rICC:
+            color_profile["type"] = "rICC"
+        elif profile_type == _constants.heif_color_profile_type_prof:
+            color_profile["type"] = "prof"
+
+        data_length = _libheif_cffi.lib.heif_image_handle_get_raw_color_profile_size(handle)
+        p_data = _libheif_cffi.ffi.new("char[]", data_length)
+        error = _libheif_cffi.lib.heif_image_handle_get_raw_color_profile(handle, p_data)
+        data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
+
     if error.code != 0:
         raise _error.HeifError(
             code=error.code,
             subcode=error.subcode,
             message=_libheif_cffi.ffi.string(error.message).decode(),
         )
-    data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
+
     data = bytes(data_buffer)
     color_profile["data"] = data
 
