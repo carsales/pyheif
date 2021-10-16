@@ -140,3 +140,15 @@ def test_open_and_load_data_collected(path):
     gc.collect()
 
     heif_file.load()
+
+
+def test_no_transformations():
+    transformed = pyheif.read("tests/images/heic/arrow.heic")
+    native = pyheif.read("tests/images/heic/arrow.heic", apply_transformations=False)
+    assert transformed.size[0] != transformed.size[1]
+    assert transformed.size == native.size[::-1]
+
+    transformed = create_pillow_image(transformed)
+    native = create_pillow_image(native)
+
+    assert transformed == native.transpose(Image.ROTATE_270)
