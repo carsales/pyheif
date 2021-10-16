@@ -12,6 +12,17 @@ from PIL import Image, ImageCms
 import pyheif
 
 
+def to_pillow_image(heif_file):
+    return Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
+
+
 def test_check_filetype():
     for fn in Path().glob("tests/images/**/*.heic"):
         filetype = pyheif.check(fn)
@@ -100,25 +111,24 @@ def test_read_icc_color_profile():
 def test_read_pillow_frombytes():
     for fn in Path().glob("tests/images/**/*.heic"):
         heif_file = pyheif.read(fn)
-        image = Image.frombytes(
-            heif_file.mode,
-            heif_file.size,
-            heif_file.data,
-            "raw",
-            heif_file.mode,
-            heif_file.stride,
-        )
+        image = to_pillow_image(heif_file)
         # image.save(f"{fn}.png")
 
 
 def test_read_10_bit():
     for fn in Path().glob("tests/images/**/*.HIF"):
         heif_file = pyheif.read(fn)
-        image = Image.frombytes(
-            heif_file.mode,
-            heif_file.size,
-            heif_file.data,
-            "raw",
-            heif_file.mode,
-            heif_file.stride,
-        )
+        image = to_pillow_image(heif_file)
+
+
+def test_no_transformations():
+    transformed = pyheif.read('tests/images/heic/arrow.heic')
+    native = pyheif.read('tests/images/heic/arrow.heic',
+                         apply_transformations=False)
+    assert transformed.size[0] != transformed.size[1]
+    assert transformed.size == native.size[::-1]
+
+    transformed = to_pillow_image(transformed)
+    native = to_pillow_image(native)
+
+    assert transformed == native.transpose(Image.ROTATE_270)
