@@ -1,3 +1,4 @@
+import functools
 import pathlib
 import warnings
 
@@ -123,14 +124,17 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
             chroma = _constants.heif_chroma_interleaved_RRGGBB_BE
 
     p_options = _libheif_cffi.lib.heif_decoding_options_alloc()
-    p_options.ignore_transformations = int(not apply_transformations)
-    p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
+    try:
+        p_options.ignore_transformations = int(not apply_transformations)
+        p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
 
-    p_img = _libheif_cffi.ffi.new("struct heif_image **")
-    error = _libheif_cffi.lib.heif_decode_image(
-        handle, p_img, colorspace, chroma, p_options,
-    )
-    _libheif_cffi.lib.heif_decoding_options_free(p_options)
+        p_img = _libheif_cffi.ffi.new("struct heif_image **")
+        error = _libheif_cffi.lib.heif_decode_image(
+            handle, p_img, colorspace, chroma, p_options,
+        )
+    finally:
+        _libheif_cffi.lib.heif_decoding_options_free(p_options)
+
     if error.code != 0:
         raise _error.HeifError(
             code=error.code,
@@ -139,11 +143,7 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
         )
     img = p_img[0]
 
-    try:
-        data, stride = _read_heif_image(img, height)
-    finally:
-        _libheif_cffi.lib.heif_image_release(img)
-
+    data, stride = _read_heif_image(img, height)
     metadata = _read_metadata(handle)
     color_profile = _read_color_profile(handle)
 
@@ -233,7 +233,16 @@ def _read_heif_image(img, height):
     stride = p_stride[0]
 
     data_length = height * stride
-    data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
-    data = bytes(data_buffer)
 
-    return data, stride
+    # Release image as soon as no references to p_data left
+    collect = functools.partial(_release_heif_image, img)
+    p_data = _libheif_cffi.ffi.gc(p_data, collect)
+
+    # ffi.buffer obligatory keeps a reference to p_data
+    data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
+
+    return data_buffer, stride
+
+
+def _release_heif_image(img, p_data=None):
+    _libheif_cffi.lib.heif_image_release(img)
