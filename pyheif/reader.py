@@ -213,8 +213,12 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
 
 
 def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
-    width = libheif.heif_image_handle_get_width(handle)
-    height = libheif.heif_image_handle_get_height(handle)
+    if apply_transformations:
+        width = libheif.heif_image_handle_get_width(handle)
+        height = libheif.heif_image_handle_get_height(handle)
+    else:
+        width = libheif.heif_image_handle_get_ispe_width(handle)
+        height = libheif.heif_image_handle_get_ispe_height(handle)
     has_alpha = bool(libheif.heif_image_handle_has_alpha_channel(handle))
     bit_depth = libheif.heif_image_handle_get_luma_bits_per_pixel(handle)
 

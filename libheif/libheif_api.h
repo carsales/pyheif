@@ -124,6 +124,13 @@ int heif_image_handle_get_height(const struct heif_image_handle* handle);
 
 int heif_image_handle_has_alpha_channel(const struct heif_image_handle*);
 
+// Get the image width from the 'ispe' box. This is the original image size without
+// any transformations applied to it. Do not use this unless you know exactly what
+// you are doing.
+int heif_image_handle_get_ispe_width(const struct heif_image_handle* handle);
+
+int heif_image_handle_get_ispe_height(const struct heif_image_handle* handle);
+
 // Returns -1 on error, e.g. if this information is not present in the image.
 int heif_image_handle_get_luma_bits_per_pixel(const struct heif_image_handle*);
 
