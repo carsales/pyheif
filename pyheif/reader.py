@@ -124,17 +124,15 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
             chroma = _constants.heif_chroma_interleaved_RRGGBB_BE
 
     p_options = _libheif_cffi.lib.heif_decoding_options_alloc()
-    try:
-        p_options.ignore_transformations = int(not apply_transformations)
-        p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
+    p_options = _libheif_cffi.ffi.gc(
+        p_options, _libheif_cffi.lib.heif_decoding_options_free)
+    p_options.ignore_transformations = int(not apply_transformations)
+    p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
 
-        p_img = _libheif_cffi.ffi.new("struct heif_image **")
-        error = _libheif_cffi.lib.heif_decode_image(
-            handle, p_img, colorspace, chroma, p_options,
-        )
-    finally:
-        _libheif_cffi.lib.heif_decoding_options_free(p_options)
-
+    p_img = _libheif_cffi.ffi.new("struct heif_image **")
+    error = _libheif_cffi.lib.heif_decode_image(
+        handle, p_img, colorspace, chroma, p_options,
+    )
     if error.code != 0:
         raise _error.HeifError(
             code=error.code,
