@@ -56,8 +56,7 @@ class UndecodedHeifFile(HeifFile):
 
 
 def check(fp):
-    d = _get_bytes(fp)
-    magic = d[:12]
+    magic = _get_bytes(fp, 12)
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
     return filetype_check
 
@@ -81,23 +80,19 @@ def open(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
     return _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit)
 
 
-def _get_bytes(fp):
+def _get_bytes(fp, length=None):
     if isinstance(fp, str):
         with builtins.open(fp, "rb") as f:
             d = f.read()
     elif isinstance(fp, bytearray):
         d = bytes(fp)
     elif isinstance(fp, pathlib.Path):
-        d = fp.read_bytes()
+        with fp.open('rb') as f:
+            d = f.read(length or -1)
     elif hasattr(fp, "read"):
-        d = fp.read()
+        d = fp.read(length or -1)
     else:
-        d = fp
-
-    if not isinstance(d, bytes):
-        raise ValueError(
-            "Input must be file name, bytes, byte array, path or file-like object"
-        )
+        d = bytes(fp)[:length]
 
     return d
 
