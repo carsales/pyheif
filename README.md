@@ -31,8 +31,11 @@ pip install git+https://github.com/carsales/pyheif.git
 ```
 
 ### Installing from source - Windows
+With Visual Studio 2015+ C Compiler and SDK installed:
 ```
-Sorry, not going to happen!
+set INCLUDE=%INCLUDE%;X:\path\to\libheif\source
+set LIB=%LIB%;X:\path\to\libheif\build
+pip install pyheif
 ```
 
 ## Usage
@@ -54,6 +57,18 @@ heif_file = pyheif.read("IMG_7424.HEIC")
 # Or using bytes directly:
 heif_file = pyheif.read(open("IMG_7424.HEIC", "rb").read())
 ```
+
+### Windows DLL Loading
+
+On Python 3.8+, heif.dll and its dependencies must be copied to the site-packages folder, or explicity located in script:
+
+```python
+import os
+os.add_dll_directory(r'X:\path\to\libheif\build')
+import libheif
+```
+
+Prior versions of Python only need it located on the PATH.
 
 ### The HeifFile object
 
