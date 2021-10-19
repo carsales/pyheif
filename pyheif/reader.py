@@ -108,35 +108,6 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
     height = _libheif_cffi.lib.heif_image_handle_get_height(handle)
     has_alpha = bool(_libheif_cffi.lib.heif_image_handle_has_alpha_channel(handle))
     bit_depth = _libheif_cffi.lib.heif_image_handle_get_luma_bits_per_pixel(handle)
-    colorspace = _constants.heif_colorspace_RGB
-    if convert_hdr_to_8bit or bit_depth <= 8:
-        if has_alpha:
-            chroma = _constants.heif_chroma_interleaved_RGBA
-        else:
-            chroma = _constants.heif_chroma_interleaved_RGB
-    else:
-        if has_alpha:
-            chroma = _constants.heif_chroma_interleaved_RRGGBBAA_BE
-        else:
-            chroma = _constants.heif_chroma_interleaved_RRGGBB_BE
-
-    p_options = _libheif_cffi.lib.heif_decoding_options_alloc()
-    p_options = _libheif_cffi.ffi.gc(
-        p_options, _libheif_cffi.lib.heif_decoding_options_free)
-    p_options.ignore_transformations = int(not apply_transformations)
-    p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
-
-    p_img = _libheif_cffi.ffi.new("struct heif_image **")
-    error = _libheif_cffi.lib.heif_decode_image(
-        handle, p_img, colorspace, chroma, p_options,
-    )
-    if error.code != 0:
-        raise _error.HeifError(
-            code=error.code,
-            subcode=error.subcode,
-            message=_libheif_cffi.ffi.string(error.message).decode(),
-        )
-    img = p_img[0]
 
     metadata = _read_metadata(handle)
     color_profile = _read_color_profile(handle)
@@ -148,7 +119,8 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
         metadata=metadata,
         color_profile=color_profile,
     )
-    heif_file.data, heif_file.stride = _read_heif_image(img, height)
+    heif_file.data, heif_file.stride = _read_heif_image(
+        handle, heif_file, apply_transformations, convert_hdr_to_8bit)
     return heif_file
 
 
@@ -233,14 +205,44 @@ def _read_color_profile(handle):
     return color_profile
 
 
-def _read_heif_image(img, height):
+def _read_heif_image(handle, heif_file, apply_transformations, convert_hdr_to_8bit):
+    colorspace = _constants.heif_colorspace_RGB
+    if convert_hdr_to_8bit or heif_file.bit_depth <= 8:
+        if heif_file.has_alpha:
+            chroma = _constants.heif_chroma_interleaved_RGBA
+        else:
+            chroma = _constants.heif_chroma_interleaved_RGB
+    else:
+        if heif_file.has_alpha:
+            chroma = _constants.heif_chroma_interleaved_RRGGBBAA_BE
+        else:
+            chroma = _constants.heif_chroma_interleaved_RRGGBB_BE
+
+    p_options = _libheif_cffi.lib.heif_decoding_options_alloc()
+    p_options = _libheif_cffi.ffi.gc(
+        p_options, _libheif_cffi.lib.heif_decoding_options_free)
+    p_options.ignore_transformations = int(not apply_transformations)
+    p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
+
+    p_img = _libheif_cffi.ffi.new("struct heif_image **")
+    error = _libheif_cffi.lib.heif_decode_image(
+        handle, p_img, colorspace, chroma, p_options,
+    )
+    if error.code != 0:
+        raise _error.HeifError(
+            code=error.code,
+            subcode=error.subcode,
+            message=_libheif_cffi.ffi.string(error.message).decode(),
+        )
+    img = p_img[0]
+
     p_stride = _libheif_cffi.ffi.new("int *")
     p_data = _libheif_cffi.lib.heif_image_get_plane_readonly(
         img, _constants.heif_channel_interleaved, p_stride
     )
     stride = p_stride[0]
 
-    data_length = height * stride
+    data_length = heif_file.size[1] * stride
 
     # Release image as soon as no references to p_data left
     collect = functools.partial(_release_heif_image, img)
