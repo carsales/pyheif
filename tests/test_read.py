@@ -122,9 +122,8 @@ def test_read_10_bit():
 
 
 def test_no_transformations():
-    transformed = pyheif.read('tests/images/heic/arrow.heic')
-    native = pyheif.read('tests/images/heic/arrow.heic',
-                         apply_transformations=False)
+    transformed = pyheif.read("tests/images/heic/arrow.heic")
+    native = pyheif.read("tests/images/heic/arrow.heic", apply_transformations=False)
     assert transformed.size[0] != transformed.size[1]
     assert transformed.size == native.size[::-1]
 
