@@ -20,6 +20,12 @@ class HeifFile:
         self.data = data
         self.stride = stride
 
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__} {self.size[0]}x{self.size[1]} {self.mode} "
+            f"with {str(len(self.data)) + ' bytes' if self.data else 'no'} data>"
+        )
+
     def load(self):
         pass  # already loaded
 
