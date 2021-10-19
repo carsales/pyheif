@@ -9,8 +9,9 @@ from . import error as _error
 
 
 class HeifFile:
-    def __init__(self, *, size, has_alpha, bit_depth,
-                 metadata, color_profile, data, stride):
+    def __init__(
+        self, *, size, has_alpha, bit_depth, metadata, color_profile, data, stride
+    ):
         self.size = size
         self.has_alpha = has_alpha
         self.mode = "RGBA" if has_alpha else "RGB"
@@ -34,8 +35,9 @@ class HeifFile:
 
 
 class UndecodedHeifFile(HeifFile):
-    def __init__(self, heif_handle, *,
-                 apply_transformations, convert_hdr_to_8bit, **kwargs):
+    def __init__(
+        self, heif_handle, *, apply_transformations, convert_hdr_to_8bit, **kwargs
+    ):
         self._heif_handle = heif_handle
         self.apply_transformations = apply_transformations
         self.convert_hdr_to_8bit = convert_hdr_to_8bit
@@ -49,7 +51,7 @@ class UndecodedHeifFile(HeifFile):
 
     def close(self):
         # Don't call super().close() here, we don't need to free bytes.
-        if hasattr(self, '_heif_handle'):
+        if hasattr(self, "_heif_handle"):
             del self._heif_handle
 
 
@@ -66,8 +68,11 @@ def read_heif(fp, apply_transformations=True):
 
 
 def read(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
-    heif_file = open(fp, apply_transformations=apply_transformations,
-                     convert_hdr_to_8bit=convert_hdr_to_8bit)
+    heif_file = open(
+        fp,
+        apply_transformations=apply_transformations,
+        convert_hdr_to_8bit=convert_hdr_to_8bit,
+    )
     return heif_file.load()
 
 
@@ -102,8 +107,10 @@ def _keep_refs(destructor, **refs):
     Keep refs to passed arguments until `inner` callback exist.
     This prevents collecting parent objects until all children collcted.
     """
+
     def inner(cdata):
         return destructor(cdata)
+
     inner._refs = refs
     return inner
 
@@ -249,7 +256,8 @@ def _read_heif_image(handle, heif_file):
 
     p_options = _libheif_cffi.lib.heif_decoding_options_alloc()
     p_options = _libheif_cffi.ffi.gc(
-        p_options, _libheif_cffi.lib.heif_decoding_options_free)
+        p_options, _libheif_cffi.lib.heif_decoding_options_free
+    )
     p_options.ignore_transformations = int(not heif_file.apply_transformations)
     p_options.convert_hdr_to_8bit = int(heif_file.convert_hdr_to_8bit)
 
@@ -267,7 +275,8 @@ def _read_heif_image(handle, heif_file):
 
     p_stride = _libheif_cffi.ffi.new("int *")
     p_data = _libheif_cffi.lib.heif_image_get_plane_readonly(
-        img, _constants.heif_channel_interleaved, p_stride)
+        img, _constants.heif_channel_interleaved, p_stride
+    )
     stride = p_stride[0]
 
     data_length = heif_file.size[1] * stride
