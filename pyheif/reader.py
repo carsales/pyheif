@@ -40,12 +40,9 @@ class UndecodedHeifFile(HeifFile):
 
     def load(self):
         self.data, self.stride = _read_heif_image(self._heif_handle, self)
-        self.__exit__()
+        del self._heif_handle
         self.__class__ = HeifFile
         return self
-
-    def __exit__(self, *args):
-        del self._heif_handle
 
 
 def check(fp):
