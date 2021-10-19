@@ -125,7 +125,8 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
 
     p_options = _libheif_cffi.lib.heif_decoding_options_alloc()
     p_options = _libheif_cffi.ffi.gc(
-        p_options, _libheif_cffi.lib.heif_decoding_options_free)
+        p_options, _libheif_cffi.lib.heif_decoding_options_free
+    )
     p_options.ignore_transformations = int(not apply_transformations)
     p_options.convert_hdr_to_8bit = int(convert_hdr_to_8bit)
 
