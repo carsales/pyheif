@@ -29,6 +29,9 @@ class HeifFile:
     def load(self):
         pass  # already loaded
 
+    def close(self):
+        pass  # TODO: release self.data here?
+
 
 class UndecodedHeifFile(HeifFile):
     def __init__(self, heif_handle, *,
@@ -40,9 +43,14 @@ class UndecodedHeifFile(HeifFile):
 
     def load(self):
         self.data, self.stride = _read_heif_image(self._heif_handle, self)
-        del self._heif_handle
+        self.close()
         self.__class__ = HeifFile
         return self
+
+    def close(self):
+        # Don't call super().close() here, we don't need to free bytes.
+        if hasattr(self, '_heif_handle'):
+            del self._heif_handle
 
 
 def check(fp):
@@ -58,9 +66,9 @@ def read_heif(fp, apply_transformations=True):
 
 
 def read(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
-    d = _get_bytes(fp)
-    result = _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit)
-    return result.load()
+    heif_file = open(fp, apply_transformations=apply_transformations,
+                     convert_hdr_to_8bit=convert_hdr_to_8bit)
+    return heif_file.load()
 
 
 def open(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
