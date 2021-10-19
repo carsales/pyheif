@@ -86,6 +86,17 @@ def _get_bytes(fp):
     return d
 
 
+def _keep_refs(destructor, **refs):
+    """
+    Keep refs to passed arguments until `inner` callback exist.
+    This prevents collecting parent objects until all children collcted.
+    """
+    def inner(cdata):
+        return destructor(cdata)
+    inner._refs = refs
+    return inner
+
+
 def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
     magic = d[:12]
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
@@ -95,7 +106,8 @@ def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
         warnings.warn("Input is an unsupported HEIF/AVIF file type - trying anyway!")
 
     ctx = _libheif_cffi.lib.heif_context_alloc()
-    ctx = _libheif_cffi.ffi.gc(ctx, _libheif_cffi.lib.heif_context_free)
+    collect = _keep_refs(_libheif_cffi.lib.heif_context_free, data=d)
+    ctx = _libheif_cffi.ffi.gc(ctx, collect)
     return _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit)
 
 
@@ -118,9 +130,8 @@ def _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit):
             subcode=error.subcode,
             message=_libheif_cffi.ffi.string(error.message).decode(),
         )
-    handle = _libheif_cffi.ffi.gc(
-        p_handle[0], _libheif_cffi.lib.heif_image_handle_release)
-
+    collect = _keep_refs(_libheif_cffi.lib.heif_image_handle_release, ctx=ctx)
+    handle = _libheif_cffi.ffi.gc(p_handle[0], collect)
     return _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
 
 
@@ -260,8 +271,7 @@ def _read_heif_image(handle, heif_file):
 
     p_stride = _libheif_cffi.ffi.new("int *")
     p_data = _libheif_cffi.lib.heif_image_get_plane_readonly(
-        img, _constants.heif_channel_interleaved, p_stride
-    )
+        img, _constants.heif_channel_interleaved, p_stride)
     stride = p_stride[0]
 
     data_length = heif_file.size[1] * stride
