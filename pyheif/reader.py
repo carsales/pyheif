@@ -113,7 +113,7 @@ def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
 
     ctx = _libheif_cffi.lib.heif_context_alloc()
     collect = _keep_refs(_libheif_cffi.lib.heif_context_free, data=d)
-    ctx = _libheif_cffi.ffi.gc(ctx, collect)
+    ctx = _libheif_cffi.ffi.gc(ctx, collect, size=len(d))
     return _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit)
 
 
@@ -269,7 +269,7 @@ def _read_heif_image(handle, heif_file):
 
     # Release image as soon as no references to p_data left
     collect = functools.partial(_release_heif_image, img)
-    p_data = _libheif_cffi.ffi.gc(p_data, collect)
+    p_data = _libheif_cffi.ffi.gc(p_data, collect, size=data_length)
 
     # ffi.buffer obligatory keeps a reference to p_data
     data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
