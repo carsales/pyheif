@@ -35,7 +35,7 @@ def encode_fourcc(fourcc):
 
 heif_color_profile_type_not_present = 0
 heif_color_profile_type_nclx = encode_fourcc("nclx")
-heif_color_profile_type_rICC = encode_fourcc("rICCC")
+heif_color_profile_type_rICC = encode_fourcc("rICC")
 heif_color_profile_type_prof = encode_fourcc("prof")
 
 heif_filetype_no = 0
