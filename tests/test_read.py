@@ -1,3 +1,4 @@
+import gc
 import glob
 import io
 import os
@@ -122,3 +123,46 @@ def test_read_10_bit():
             heif_file.mode,
             heif_file.stride,
         )
+
+
+def test_open_and_load():
+    last_metadata = None
+    last_color_profile = None
+    for fn in Path().glob("tests/images/**/*.heic"):
+        heif_file = pyheif.open(fn)
+        assert heif_file.size[0] > 0
+        assert heif_file.size[1] > 0
+        assert heif_file.has_alpha is not None
+        assert heif_file.mode is not None
+        assert heif_file.bit_depth is not None
+
+        assert heif_file.data is None
+        assert heif_file.stride is None
+
+        if heif_file.metadata:
+            last_metadata = heif_file.metadata[0]
+        if heif_file.color_profile:
+            last_color_profile = heif_file.color_profile
+
+        heif_file.load()
+        assert heif_file.data is not None
+        assert heif_file.stride is not None
+        assert len(heif_file.data) >= heif_file.stride * heif_file.size[1]
+        assert type(heif_file.data[:100]) == bytes
+
+    # Check at least one file has it
+    assert last_metadata is not None
+    assert last_color_profile is not None
+
+
+def test_open_and_load_data_collected():
+    for fn in Path().glob("tests/images/**/*.heic"):
+        data = fn.read_bytes()
+        heif_file = pyheif.open(data)
+        
+        # heif_file.load() should work even if there is no other refs 
+        # to the source data.
+        data = None
+        gc.collect()
+
+        heif_file.load()
