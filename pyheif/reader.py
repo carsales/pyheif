@@ -206,11 +206,13 @@ def _read_color_profile(handle):
     if profile_type == _constants.heif_color_profile_type_nclx:
         color_profile["type"] = "nclx"
         data_length = _libheif_cffi.ffi.sizeof("struct heif_color_profile_nclx")
-        p_p_data = _libheif_cffi.ffi.new("struct heif_color_profile_nclx * *")
+        pp_data = _libheif_cffi.ffi.new("struct heif_color_profile_nclx * *")
         error = _libheif_cffi.lib.heif_image_handle_get_nclx_color_profile(
-            handle, p_p_data
+            handle, pp_data
         )
-        p_data = p_p_data[0]
+        p_data = _libheif_cffi.ffi.gc(
+            pp_data[0], _libheif_cffi.lib.heif_nclx_color_profile_free
+        )
 
     else:
         if profile_type == _constants.heif_color_profile_type_rICC:
