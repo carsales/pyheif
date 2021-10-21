@@ -115,11 +115,18 @@ def test_open_and_load(path):
         assert heif_file.metadata
         assert heif_file.color_profile
 
-    heif_file.load()
+    res = heif_file.load()
+    assert heif_file is res
     assert heif_file.data is not None
     assert heif_file.stride is not None
     assert len(heif_file.data) >= heif_file.stride * heif_file.size[1]
     assert type(heif_file.data[:100]) == bytes
+
+    # Subsequent calls don't change anything
+    res = heif_file.load()
+    assert heif_file is res
+    assert heif_file.data is not None
+    assert heif_file.stride is not None
 
 
 @pytest.mark.parametrize("path", heif_files + hif_files)

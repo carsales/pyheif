@@ -28,7 +28,7 @@ class HeifFile:
         )
 
     def load(self):
-        pass  # already loaded
+        return self  # already loaded
 
     def close(self):
         pass  # TODO: release self.data here?
