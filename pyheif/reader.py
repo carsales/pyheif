@@ -38,11 +38,8 @@ def read(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
 
 
 def _get_bytes(fp, length=None):
-    if isinstance(fp, str):
+    if isinstance(fp, (str, pathlib.Path)):
         with open(fp, "rb") as f:
-            d = f.read(length or -1)
-    elif isinstance(fp, pathlib.Path):
-        with fp.open("rb") as f:
             d = f.read(length or -1)
     elif hasattr(fp, "read"):
         d = fp.read(length or -1)

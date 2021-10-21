@@ -20,7 +20,7 @@ def test_check_filetype():
 
 def test_read_file_names():
     for fn in Path().glob("tests/images/**/*.heic"):
-        heif_file = pyheif.read(fn)
+        heif_file = pyheif.read(str(fn))
         assert heif_file is not None
         width, height = heif_file.size
         assert width > 0
