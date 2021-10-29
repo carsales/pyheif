@@ -1,4 +1,4 @@
-FROM quay.io/pypa/manylinux2014_x86_64:2021-03-24-f395ab8
+FROM quay.io/pypa/manylinux2014_x86_64
 
 ###############
 # Build tools #
@@ -198,6 +198,13 @@ RUN set -ex \
 # python 3.9
 RUN set -ex \
     && cd "/opt/python/cp39-cp39/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
+# python 3.10
+RUN set -ex \
+    && cd "/opt/python/cp310-cp310/bin/" \
     && ./pip install auditwheel \
     && ./pip wheel /pyheif -w /wheelhouse/ \
     && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
