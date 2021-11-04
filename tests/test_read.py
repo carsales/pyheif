@@ -26,6 +26,17 @@ def read_and_quick_check_heif(source):
     assert len(heif_file.data) > 0
 
 
+def create_pillow_image(heif_file):
+    return Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
+
+
 @pytest.mark.parametrize("path", heif_files)
 def test_check_filetype(path):
     filetype = pyheif.check(path)
@@ -77,25 +88,11 @@ def test_read_icc_color_profile(heif_file):
 
 
 def test_read_pillow_frombytes(heif_file):
-    image = Image.frombytes(
-        heif_file.mode,
-        heif_file.size,
-        heif_file.data,
-        "raw",
-        heif_file.mode,
-        heif_file.stride,
-    )
+    image = create_pillow_image(heif_file)
     # image.save(f"{fn}.png")
 
 
 @pytest.mark.parametrize("path", hif_files)
 def test_read_10_bit(path):
     heif_file = pyheif.read(path)
-    image = Image.frombytes(
-        heif_file.mode,
-        heif_file.size,
-        heif_file.data,
-        "raw",
-        heif_file.mode,
-        heif_file.stride,
-    )
+    image = create_pillow_image(heif_file)
