@@ -133,6 +133,20 @@ RUN set -ex \
     && ./pip wheel /pyheif -w /wheelhouse/ \
     && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
     && rm /wheelhouse/*
+# pypy 3.7
+RUN set -ex \
+    && cd "/opt/python/pp37-pypy37_pp73/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
+# pypy 3.8
+RUN set -ex \
+    && cd "/opt/python/pp38-pypy38_pp73/bin/" \
+    && ./pip install auditwheel \
+    && ./pip wheel /pyheif -w /wheelhouse/ \
+    && ./auditwheel repair /wheelhouse/*pyheif*.whl --plat manylinux2014_x86_64 -w /repaired \
+    && rm /wheelhouse/*
 
 # upload
 ARG PYPI_USERNAME
