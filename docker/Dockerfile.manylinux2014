@@ -4,13 +4,9 @@ FROM quay.io/pypa/manylinux2014_x86_64
 # Build tools #
 ###############
 
-# setup
-RUN set -ex \
-    && mkdir /build-tools
-
 # pkg-config
 RUN set -ex \
-    && cd /build-tools \
+    && mkdir -p /build-tools && cd /build-tools \
     && PKG_CONFIG_VERSION="0.29.2" \
     && curl -fLO https://pkg-config.freedesktop.org/releases/pkg-config-${PKG_CONFIG_VERSION}.tar.gz \
     && tar xvf pkg-config-${PKG_CONFIG_VERSION}.tar.gz \
@@ -18,11 +14,12 @@ RUN set -ex \
     && ./configure \
     && make -j4 \
     && make install \
-    && pkg-config --version
+    && pkg-config --version \
+    && rm -rf /build-tools
 
 # nasm
 RUN set -ex \
-    && cd /build-tools \
+    && mkdir -p /build-tools && cd /build-tools \
     && NASM_VERSION="2.15.02" \
     && curl -fLO https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/nasm-${NASM_VERSION}.tar.gz \
     && tar xvf nasm-${NASM_VERSION}.tar.gz \
@@ -30,24 +27,16 @@ RUN set -ex \
     && ./configure \
     && make -j4 \
     && make install \
-    && nasm --version
-
-# cleanup
-RUN set -ex \
-    && cd / \
+    && nasm --version \
     && rm -rf /build-tools
 
 ################
 # Dependencies #
 ################
 
-# setup
-RUN set -ex \
-    && mkdir /build-deps
-
 # x265
 RUN set -ex \
-    && cd /build-deps \
+    && mkdir -p /build-deps && cd /build-deps \
     && X265_VERSION="3.5" \
     && curl -fLO https://bitbucket.org/multicoreware/x265_git/downloads/x265_${X265_VERSION}.tar.gz \
     && tar xvf x265_${X265_VERSION}.tar.gz \
@@ -55,11 +44,12 @@ RUN set -ex \
     && cmake -DCMAKE_INSTALL_PREFIX=/usr -G "Unix Makefiles" ./source \
     && make -j4 \
     && make install \
-    && ldconfig
+    && ldconfig \
+    && rm -rf /build-deps
 
 # libde265
 RUN set -ex \
-    && cd /build-deps \
+    && mkdir -p /build-deps && cd /build-deps \
     && LIBDE265_VERSION="1.0.5" \
     && curl -fLO https://github.com/strukturag/libde265/releases/download/v${LIBDE265_VERSION}/libde265-${LIBDE265_VERSION}.tar.gz \
     && tar xvf libde265-${LIBDE265_VERSION}.tar.gz \
@@ -68,25 +58,27 @@ RUN set -ex \
     && ./configure --prefix /usr --disable-encoder --disable-dec265 --disable-sherlock265 --disable-dependency-tracking \
     && make -j4 \
     && make install \
-    && ldconfig
+    && ldconfig \
+    && rm -rf /build-deps
 
-# libaom v2.0
+# libaom
 RUN set -ex \
-    && cd /build-deps \
-    && LIBAOM_COMMIT="bb35ba9148543f22ba7d8642e4fbd29ae301f5dc" \
+    && mkdir -p /build-deps && cd /build-deps \
+    && LIBAOM_VERSION="v2.0.0" \
     && mkdir -v aom && mkdir -v aom_build && cd aom \
-    && curl -fLO "https://aomedia.googlesource.com/aom/+archive/${LIBAOM_COMMIT}.tar.gz" \
-    && tar xvf ${LIBAOM_COMMIT}.tar.gz \
+    && curl -fLO "https://aomedia.googlesource.com/aom/+archive/${LIBAOM_VERSION}.tar.gz" \
+    && tar xvf ${LIBAOM_VERSION}.tar.gz \
     && cd ../aom_build \
     && MINIMAL_INSTALL="-DENABLE_TESTS=0 -DENABLE_TOOLS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0" \
     && cmake $MINIMAL_INSTALL -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=1 ../aom \
     && make -j4 \
     && make install \
-    && ldconfig
+    && ldconfig \
+    && rm -rf /build-deps
 
 # libheif
 RUN set -ex \
-    && cd /build-deps \
+    && mkdir -p /build-deps && cd /build-deps \
     && LIBHEIF_VERSION="1.7.0" \
     && curl -fLO https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz \
     && tar xvf libheif-${LIBHEIF_VERSION}.tar.gz \
@@ -94,11 +86,7 @@ RUN set -ex \
     && ./configure --prefix /usr --disable-examples \
     && make -j4 \
     && make install \
-    && ldconfig
-
-# cleanup
-RUN set -ex \
-    && cd / \
+    && ldconfig \
     && rm -rf /build-deps
 
 ##########################
@@ -106,7 +94,7 @@ RUN set -ex \
 ##########################
 
 # setup
-RUN mkdir /wheelhouse /repaired /pyheif
+RUN mkdir /wheelhouse /repaired
 COPY ./ /pyheif/
 
 # build wheels
