@@ -178,11 +178,12 @@ RUN set -ex \
     && PNV="/opt/python/pp37-pypy37_pp73/bin/" \
     && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp37-pypy37_pp73-*.whl \
     && $PNV/pytest
-# pypy 3.8
-RUN set -ex \
-    && PNV="/opt/python/pp38-pypy38_pp73/bin/" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp38-pypy38_pp73-*.whl \
-    && $PNV/pytest
+# No Pillow wheels for pypy 3.8
+# # pypy 3.8
+# RUN set -ex \
+#     && PNV="/opt/python/pp38-pypy38_pp73/bin/" \
+#     && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp38-pypy38_pp73-*.whl \
+#     && $PNV/pytest
 
 #################
 # Upload wheels #
