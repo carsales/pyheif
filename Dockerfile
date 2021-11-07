@@ -145,9 +145,44 @@ RUN set -ex \
 FROM base AS tested
 
 COPY --from=repaired /wheelhouse /wheelhouse
-COPY ./requirements-test.txt /pyheif/requirements.txt
-COPY ./tests /pyheif/tests
+COPY ./ /pyheif
+WORKDIR /pyheif
 
+# python 3.6
+RUN set -ex \
+    && PNV="/opt/python/cp36-cp36m/bin" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp36-cp36m-*.whl \
+    && $PNV/pytest
+# python 3.7
+RUN set -ex \
+    && PNV="/opt/python/cp37-cp37m/bin" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp37-cp37m-*.whl \
+    && $PNV/pytest
+# python 3.8
+RUN set -ex \
+    && PNV="/opt/python/cp38-cp38/bin" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp38-cp38-*.whl \
+    && $PNV/pytest
+# python 3.9
+RUN set -ex \
+    && PNV="/opt/python/cp39-cp39/bin" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp39-cp39-*.whl \
+    && $PNV/pytest
+# python 3.10
+RUN set -ex \
+    && PNV="/opt/python/cp310-cp310/bin" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp310-cp310-*.whl \
+    && $PNV/pytest
+# pypy 3.7
+RUN set -ex \
+    && PNV="/opt/python/pp37-pypy37_pp73/bin/" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp37-pypy37_pp73-*.whl \
+    && $PNV/pytest
+# pypy 3.8
+RUN set -ex \
+    && PNV="/opt/python/pp38-pypy38_pp73/bin/" \
+    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp38-pypy38_pp73-*.whl \
+    && $PNV/pytest
 
 #################
 # Upload wheels #
