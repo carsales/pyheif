@@ -14,8 +14,8 @@ setup(
     install_requires=["cffi>=1.0.0"],
     setup_requires=["cffi>=1.0.0"],
     cffi_modules=["libheif/libheif_build.py:ffibuilder"],
-    author="David Poirier",
-    author_email="david-poirier-csn@users.noreply.github.com",
+    author="Anthony Paes",
+    author_email="ant32bit-carsales@users.noreply.github.com",
     description="Python 3.6+ interface to libheif library",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,5 +27,5 @@ setup(
         "Operating System :: POSIX :: Linux",
     ],
     keywords="heif heic",
-    url="https://github.com/david-poirier-csn/pyheif",
+    url="https://github.com/carsales/pyheif",
 )
