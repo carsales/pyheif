@@ -65,7 +65,7 @@ On Python 3.8+, heif.dll and its dependencies must be copied to the site-package
 ```python
 import os
 os.add_dll_directory(r'X:\path\to\libheif\build')
-import libheif
+import pyheif
 ```
 
 Prior versions of Python only need it located on the PATH.
