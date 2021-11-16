@@ -13,6 +13,7 @@ class HeifFile:
         self.size = size
         self.data = data
         self.metadata = metadata
+        self.brand = _constants.heif_brand_unknown_brand
         self.color_profile = color_profile
         self.has_alpha = has_alpha
         self.mode = "RGBA" if has_alpha else "RGB"
@@ -70,6 +71,7 @@ def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
     ctx = _libheif_cffi.lib.heif_context_alloc()
     try:
         result = _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit)
+        result.brand = _libheif_cffi.lib.heif_main_brand(magic, len(magic))
     finally:
         _libheif_cffi.lib.heif_context_free(ctx)
     return result
