@@ -111,7 +111,7 @@ def test_open_and_load(path):
     assert heif_file.data is None
     assert heif_file.stride is None
 
-    if path.name == 'arrow.heic':
+    if path.name == "arrow.heic":
         assert heif_file.metadata
         assert heif_file.color_profile
 
@@ -133,8 +133,8 @@ def test_open_and_load(path):
 def test_open_and_load_data_collected(path):
     data = path.read_bytes()
     heif_file = pyheif.open(data)
-    
-    # heif_file.load() should work even if there is no other refs 
+
+    # heif_file.load() should work even if there is no other refs
     # to the source data.
     data = None
     gc.collect()
