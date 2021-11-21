@@ -11,7 +11,8 @@ import pytest
 
 heic_files = list(Path().glob("tests/images/**/*.heic"))
 hif_files = list(Path().glob("tests/images/**/*.HIF"))
-heif_files = heic_files + hif_files
+avif_files = list(Path().glob("tests/images/**/*.avif"))
+heif_files = heic_files + hif_files + avif_files
 
 
 @pytest.mark.parametrize("path", heif_files)
