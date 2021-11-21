@@ -5,7 +5,7 @@ from pathlib import Path
 
 import piexif
 from PIL import Image, ImageCms
-import pyheif
+import pyheif.reader
 import pytest
 
 
@@ -15,37 +15,42 @@ heif_files = heic_files + hif_files
 
 
 @pytest.mark.parametrize("path", heif_files)
-def test_check_filetype(path):
+def test_check(path):
     filetype = pyheif.check(path)
     assert pyheif.heif_filetype_no != filetype
 
 
-@pytest.mark.parametrize("path", heif_files)
-def test_read_file_names(path):
-    read_and_quick_check_heif(str(path))
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_path(path):
+    d = pyheif.reader._get_bytes(path)
+    assert d == path.read_bytes()
 
 
-@pytest.mark.parametrize("path", heif_files)
-def test_read_paths(path):
-    read_and_quick_check_heif(path)
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_file_name(path):
+    d = pyheif.reader._get_bytes(str(path))
+    assert d == path.read_bytes()
 
 
-@pytest.mark.parametrize("path", heif_files)
-def test_read_file_objects(path):
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_file_object(path):
     with open(path, "rb") as f:
-        read_and_quick_check_heif(f)
+        d = pyheif.reader._get_bytes(f)
+    assert d == path.read_bytes()
 
 
-@pytest.mark.parametrize("path", heif_files)
-def test_read_bytes(path):
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_bytes(path):
     with open(path, "rb") as f:
-        read_and_quick_check_heif(f.read())
+        d = pyheif.reader._get_bytes(f.read())
+    assert d == path.read_bytes()
 
 
-@pytest.mark.parametrize("path", heif_files)
-def test_read_bytearrays(path):
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_bytes(path):
     with open(path, "rb") as f:
-        read_and_quick_check_heif(bytearray(f.read()))
+        d = pyheif.reader._get_bytes(bytearray(f.read()))
+    assert d == path.read_bytes()
 
 
 @pytest.fixture(scope="session", params=heif_files)
