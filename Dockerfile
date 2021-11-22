@@ -144,6 +144,16 @@ RUN set -ex \
 
 FROM base AS tested
 
+COPY ./requirements-test.txt /tmp/requirements-test.txt
+
+RUN /opt/python/cp36-cp36m/bin/pip install -r /tmp/requirements-test.txt
+RUN /opt/python/cp37-cp37m/bin/pip install -r /tmp/requirements-test.txt
+RUN /opt/python/cp38-cp38/bin/pip install -r /tmp/requirements-test.txt
+RUN /opt/python/cp39-cp39/bin/pip install -r /tmp/requirements-test.txt
+RUN /opt/python/cp310-cp310/bin/pip install -r /tmp/requirements-test.txt
+RUN /opt/python/pp37-pypy37_pp73/bin/pip install -r /tmp/requirements-test.txt
+# RUN /opt/python/pp38-pypy38_pp73/bin/pip install -r /tmp/requirements-test.txt
+
 COPY --from=repaired /wheelhouse /wheelhouse
 COPY ./ /pyheif
 WORKDIR /pyheif
@@ -151,38 +161,38 @@ WORKDIR /pyheif
 # python 3.6
 RUN set -ex \
     && PNV="/opt/python/cp36-cp36m/bin" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp36-cp36m-*.whl \
+    && $PNV/pip install /wheelhouse/*-cp36-cp36m-*.whl \
     && $PNV/pytest
 # python 3.7
 RUN set -ex \
     && PNV="/opt/python/cp37-cp37m/bin" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp37-cp37m-*.whl \
+    && $PNV/pip install /wheelhouse/*-cp37-cp37m-*.whl \
     && $PNV/pytest
 # python 3.8
 RUN set -ex \
     && PNV="/opt/python/cp38-cp38/bin" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp38-cp38-*.whl \
+    && $PNV/pip install /wheelhouse/*-cp38-cp38-*.whl \
     && $PNV/pytest
 # python 3.9
 RUN set -ex \
     && PNV="/opt/python/cp39-cp39/bin" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp39-cp39-*.whl \
+    && $PNV/pip install /wheelhouse/*-cp39-cp39-*.whl \
     && $PNV/pytest
 # python 3.10
 RUN set -ex \
     && PNV="/opt/python/cp310-cp310/bin" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-cp310-cp310-*.whl \
+    && $PNV/pip install /wheelhouse/*-cp310-cp310-*.whl \
     && $PNV/pytest
 # pypy 3.7
 RUN set -ex \
     && PNV="/opt/python/pp37-pypy37_pp73/bin/" \
-    && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp37-pypy37_pp73-*.whl \
+    && $PNV/pip install /wheelhouse/*-pp37-pypy37_pp73-*.whl \
     && $PNV/pytest
 # No Pillow wheels for pypy 3.8
 # # pypy 3.8
 # RUN set -ex \
 #     && PNV="/opt/python/pp38-pypy38_pp73/bin/" \
-#     && $PNV/pip install -r /pyheif/requirements-test.txt /wheelhouse/*-pp38-pypy38_pp73-*.whl \
+#     && $PNV/pip install /wheelhouse/*-pp38-pypy38_pp73-*.whl \
 #     && $PNV/pytest
 
 #################
@@ -196,4 +206,4 @@ ARG PYPI_PASSWORD
 RUN set -ex \
     && cd "/opt/python/cp38-cp38/bin/" \
     && ./pip install twine \
-    && ./twine upload /repaired/*manylinux2014*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} \
+    && ./twine upload /wheelhouse/*manylinux2014*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} \

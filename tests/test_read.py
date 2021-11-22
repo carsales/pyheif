@@ -5,12 +5,53 @@ from pathlib import Path
 
 import piexif
 from PIL import Image, ImageCms
-import pyheif
+import pyheif.reader
 import pytest
 
 
-heif_files = list(Path().glob("tests/images/**/*.heic"))
+heic_files = list(Path().glob("tests/images/**/*.heic"))
 hif_files = list(Path().glob("tests/images/**/*.HIF"))
+avif_files = list(Path().glob("tests/images/**/*.avif"))
+heif_files = heic_files + hif_files + avif_files
+
+
+@pytest.mark.parametrize("path", heif_files)
+def test_check(path):
+    filetype = pyheif.check(path)
+    assert pyheif.heif_filetype_no != filetype
+
+
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_path(path):
+    d = pyheif.reader._get_bytes(path)
+    assert d == path.read_bytes()
+
+
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_file_name(path):
+    d = pyheif.reader._get_bytes(str(path))
+    assert d == path.read_bytes()
+
+
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_file_object(path):
+    with open(path, "rb") as f:
+        d = pyheif.reader._get_bytes(f)
+    assert d == path.read_bytes()
+
+
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_bytes(path):
+    with open(path, "rb") as f:
+        d = pyheif.reader._get_bytes(f.read())
+    assert d == path.read_bytes()
+
+
+@pytest.mark.parametrize("path", heif_files[:2])
+def test_get_bytes_from_bytes(path):
+    with open(path, "rb") as f:
+        d = pyheif.reader._get_bytes(bytearray(f.read()))
+    assert d == path.read_bytes()
 
 
 @pytest.fixture(scope="session", params=heif_files)
@@ -18,58 +59,12 @@ def heif_file(request):
     return pyheif.read(request.param)
 
 
-def read_and_quick_check_heif(source):
-    heif_file = pyheif.read(source)
+def test_check_heif_propreties(heif_file):
     assert heif_file is not None
     width, height = heif_file.size
     assert width > 0
     assert height > 0
     assert len(heif_file.data) > 0
-
-
-def create_pillow_image(heif_file):
-    return Image.frombytes(
-        heif_file.mode,
-        heif_file.size,
-        heif_file.data,
-        "raw",
-        heif_file.mode,
-        heif_file.stride,
-    )
-
-
-@pytest.mark.parametrize("path", heif_files)
-def test_check_filetype(path):
-    filetype = pyheif.check(path)
-    assert pyheif.heif_filetype_no != filetype
-
-
-@pytest.mark.parametrize("path", heif_files)
-def test_read_file_names(path):
-    read_and_quick_check_heif(str(path))
-
-
-@pytest.mark.parametrize("path", heif_files)
-def test_read_paths(path):
-    read_and_quick_check_heif(path)
-
-
-@pytest.mark.parametrize("path", heif_files)
-def test_read_file_objects(path):
-    with open(path, "rb") as f:
-        read_and_quick_check_heif(f)
-
-
-@pytest.mark.parametrize("path", heif_files)
-def test_read_bytes(path):
-    with open(path, "rb") as f:
-        read_and_quick_check_heif(f.read())
-
-
-@pytest.mark.parametrize("path", heif_files)
-def test_read_bytearrays(path):
-    with open(path, "rb") as f:
-        read_and_quick_check_heif(bytearray(f.read()))
 
 
 def test_read_exif_metadata(heif_file):
@@ -89,17 +84,17 @@ def test_read_icc_color_profile(heif_file):
 
 
 def test_read_pillow_frombytes(heif_file):
-    image = create_pillow_image(heif_file)
-    # image.save(f"{fn}.png")
+    image = Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
 
 
-@pytest.mark.parametrize("path", hif_files)
-def test_read_10_bit(path):
-    heif_file = pyheif.read(path)
-    image = create_pillow_image(heif_file)
-
-
-@pytest.mark.parametrize("path", heif_files + hif_files)
+@pytest.mark.parametrize("path", heif_files)
 def test_open_and_load(path):
     heif_file = pyheif.open(path)
     assert heif_file.size[0] > 0
@@ -129,8 +124,8 @@ def test_open_and_load(path):
     assert heif_file.stride is not None
 
 
-@pytest.mark.parametrize("path", heif_files + hif_files)
-def test_open_and_load_data_collected(path):
+@pytest.mark.parametrize("path", heif_files)
+def test_open_and_load_data_not_collected(path):
     data = path.read_bytes()
     heif_file = pyheif.open(data)
 
