@@ -24,6 +24,8 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+_libheif_cffi.c
+_libheif_cffi.o
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -102,3 +104,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+#scrath
+scratch/

@@ -59,7 +59,7 @@ def heif_file(request):
     return pyheif.read(request.param)
 
 
-def test_check_heif_propreties(heif_file):
+def test_check_heif_properties(heif_file):
     assert heif_file is not None
     width, height = heif_file.size
     assert width > 0
@@ -135,3 +135,35 @@ def test_open_and_load_data_not_collected(path):
     gc.collect()
 
     heif_file.load()
+
+
+@pytest.mark.parametrize("path", heif_files)
+def test_open_container(path):
+    container = pyheif.open_container(path)
+    assert container is not None
+    assert container.primary_image is not None
+    assert len(container.top_level_images) > 0
+
+    if path.name == "multiimage.heic":
+        assert len(container.top_level_images) == 5
+
+    n_primary_images = 0
+    for top_level_image in container.top_level_images:
+        if top_level_image.is_primary:
+            n_primary_images += 1
+            assert container.primary_image == top_level_image.image
+        top_level_image.image.load()
+        test_check_heif_properties(top_level_image.image)
+        test_read_pillow_frombytes(top_level_image.image)
+    assert n_primary_images == 1
+
+    if path.name == "live-image.heic":
+        top_level_image = container.top_level_images[0]
+        assert len(top_level_image.auxiliary_images) == 1
+
+        auxiliary_image = top_level_image.auxiliary_images[0]
+        assert auxiliary_image.type == "urn:com:apple:photo:2020:aux:hdrgainmap"
+
+        auxiliary_image.image.load()
+        test_check_heif_properties(auxiliary_image.image)
+        test_read_pillow_frombytes(auxiliary_image.image)

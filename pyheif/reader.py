@@ -55,6 +55,34 @@ class UndecodedHeifFile(HeifFile):
             del self._heif_handle
 
 
+class HeifContainer:
+    def __init__(self, primary_image, top_level_images):
+        self.primary_image = primary_image
+        self.top_level_images = top_level_images
+
+
+class HeifTopLevelImage:
+    def __init__(self, id, image, is_primary, depth_image, auxiliary_images):
+        self.id = id
+        self.image = image
+        self.is_primary = is_primary
+        self.depth_image = depth_image
+        self.auxiliary_images = auxiliary_images
+
+
+class HeifDepthImage:
+    def __init__(self, id, image):
+        self.id = id
+        self.image = image
+
+
+class HeifAuxiliaryImage:
+    def __init__(self, id, type, image):
+        self.id = id
+        self.type = type
+        self.image = image
+
+
 def check(fp):
     magic = _get_bytes(fp, 12)
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
@@ -78,6 +106,12 @@ def read(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
 def open(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
     d = _get_bytes(fp)
     return _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit)
+
+
+def open_container(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
+    d = _get_bytes(fp)
+    ctx = _get_heif_context(d)
+    return _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit)
 
 
 def _get_bytes(fp, length=None):
@@ -106,6 +140,11 @@ def _keep_refs(destructor, **refs):
 
 
 def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
+    ctx = _get_heif_context(d)
+    return _read_heif_primary_handle(ctx, apply_transformations, convert_hdr_to_8bit)
+
+
+def _get_heif_context(d):
     magic = d[:12]
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
     if filetype_check == _constants.heif_filetype_no:
@@ -116,31 +155,68 @@ def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
     ctx = _libheif_cffi.lib.heif_context_alloc()
     collect = _keep_refs(_libheif_cffi.lib.heif_context_free, data=d)
     ctx = _libheif_cffi.ffi.gc(ctx, collect, size=len(d))
-    return _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit)
 
-
-def _read_heif_context(ctx, d, apply_transformations, convert_hdr_to_8bit):
     error = _libheif_cffi.lib.heif_context_read_from_memory_without_copy(
         ctx, d, len(d), _libheif_cffi.ffi.NULL
     )
-    if error.code != 0:
-        raise _error.HeifError(
-            code=error.code,
-            subcode=error.subcode,
-            message=_libheif_cffi.ffi.string(error.message).decode(),
-        )
+    _error._assert_success(error)
+    return ctx
 
+
+def _read_heif_primary_handle(ctx, apply_transformations, convert_hdr_to_8bit):
     p_handle = _libheif_cffi.ffi.new("struct heif_image_handle **")
     error = _libheif_cffi.lib.heif_context_get_primary_image_handle(ctx, p_handle)
-    if error.code != 0:
-        raise _error.HeifError(
-            code=error.code,
-            subcode=error.subcode,
-            message=_libheif_cffi.ffi.string(error.message).decode(),
-        )
+    _error._assert_success(error)
+
     collect = _keep_refs(_libheif_cffi.lib.heif_image_handle_release, ctx=ctx)
     handle = _libheif_cffi.ffi.gc(p_handle[0], collect)
     return _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
+
+
+def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
+    image_count = _libheif_cffi.lib.heif_context_get_number_of_top_level_images(ctx)
+    if image_count == 0:
+        return HeifContainer(None, [])
+    ids = _libheif_cffi.ffi.new("heif_item_id[]", image_count)
+    image_count = _libheif_cffi.lib.heif_context_get_list_of_top_level_image_IDs(
+        ctx, ids, image_count
+    )
+
+    p_primary_image_id = _libheif_cffi.ffi.new("heif_item_id *")
+    error = _libheif_cffi.lib.heif_context_get_primary_image_ID(ctx, p_primary_image_id)
+    _error._assert_success(error)
+    primary_image_id = p_primary_image_id[0]
+    primary_image = None
+    top_level_images = []
+
+    for id in ids:
+        p_handle = _libheif_cffi.ffi.new("struct heif_image_handle **")
+        error = _libheif_cffi.lib.heif_context_get_image_handle(ctx, id, p_handle)
+        _error._assert_success(error)
+
+        collect = _keep_refs(_libheif_cffi.lib.heif_image_handle_release, ctx=ctx)
+        handle = _libheif_cffi.ffi.gc(p_handle[0], collect)
+
+        image = _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
+
+        is_primary = id == primary_image_id
+        if is_primary:
+            primary_image = image
+
+        depth_image = _read_depth_image(
+            handle, apply_transformations, convert_hdr_to_8bit
+        )
+        auxiliary_images = _read_all_auxiliary_images(
+            handle, apply_transformations, convert_hdr_to_8bit
+        )
+
+        top_level_image = HeifTopLevelImage(
+            id, image, is_primary, depth_image, auxiliary_images
+        )
+
+        top_level_images.append(top_level_image)
+
+    return HeifContainer(primary_image, top_level_images)
 
 
 def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
@@ -165,6 +241,85 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
     return heif_file
 
 
+def _read_depth_image(handle, apply_transformations, convert_hdr_to_8bit):
+    has_depth_image = _libheif_cffi.lib.heif_image_handle_has_depth_image(handle)
+    if has_depth_image:
+        p_depth_image_id = _libheif_cffi.ffi.new("heif_item_id *")
+        n_depth_images = _libheif_cffi.lib.heif_image_handle_get_list_of_depth_image_IDs(
+            handle, p_depth_image_id, 1
+        )
+        if n_depth_images == 1:
+            depth_id = p_depth_image_id[0]
+            p_depth_handle = _libheif_cffi.ffi.new("struct heif_image_handle **")
+            error = _libheif_cffi.lib.heif_image_handle_get_depth_image_handle(
+                handle, depth_id, p_depth_handle
+            )
+            _error._assert_success(error)
+            collect = _keep_refs(
+                _libheif_cffi.lib.heif_image_handle_release, handle=handle
+            )
+            depth_handle = _libheif_cffi.ffi.gc(p_depth_handle[0], collect)
+            return HeifDepthImage(
+                depth_id,
+                _read_heif_handle(
+                    depth_handle, apply_transformations, convert_hdr_to_8bit
+                ),
+            )
+    return None
+
+
+def _read_all_auxiliary_images(handle, apply_transformations, convert_hdr_to_8bit):
+    aux_count = _libheif_cffi.lib.heif_image_handle_get_number_of_auxiliary_images(
+        handle,
+        _constants.LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA
+        | _constants.LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH,
+    )
+    if aux_count == 0:
+        return []
+    aux_ids = _libheif_cffi.ffi.new("heif_item_id[]", aux_count)
+    aux_count = _libheif_cffi.lib.heif_image_handle_get_list_of_auxiliary_image_IDs(
+        handle,
+        _constants.LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA
+        | _constants.LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH,
+        aux_ids,
+        aux_count,
+    )
+    auxiliaries = []
+    for aux_id in aux_ids:
+        aux_image = _read_auxiliary_image(
+            handle, aux_id, apply_transformations, convert_hdr_to_8bit
+        )
+        auxiliaries.append(aux_image)
+    return auxiliaries
+
+
+def _read_auxiliary_image(
+    handle, auxiliary_image_id, apply_transformations, convert_hdr_to_8bit
+):
+    p_aux_handle = _libheif_cffi.ffi.new("struct heif_image_handle **")
+    error = _libheif_cffi.lib.heif_image_handle_get_auxiliary_image_handle(
+        handle, auxiliary_image_id, p_aux_handle
+    )
+    _error._assert_success(error)
+
+    collect = _keep_refs(_libheif_cffi.lib.heif_image_handle_release, handle=handle)
+    aux_handle = _libheif_cffi.ffi.gc(p_aux_handle[0], collect)
+
+    p_aux_type = _libheif_cffi.ffi.new("char **")
+    error = _libheif_cffi.lib.heif_image_handle_get_auxiliary_type(
+        aux_handle, p_aux_type
+    )
+    _error._assert_success(error)
+    aux_type = _libheif_cffi.ffi.string(p_aux_type[0]).decode()
+    _libheif_cffi.lib.heif_image_handle_free_auxiliary_types(aux_handle, p_aux_type)
+
+    return HeifAuxiliaryImage(
+        auxiliary_image_id,
+        aux_type,
+        _read_heif_handle(aux_handle, apply_transformations, convert_hdr_to_8bit),
+    )
+
+
 def _read_metadata(handle):
     block_count = _libheif_cffi.lib.heif_image_handle_get_number_of_metadata_blocks(
         handle, _libheif_cffi.ffi.NULL
@@ -187,12 +342,8 @@ def _read_metadata(handle):
         )
         p_data = _libheif_cffi.ffi.new("char[]", data_length)
         error = _libheif_cffi.lib.heif_image_handle_get_metadata(handle, ids[i], p_data)
-        if error.code != 0:
-            raise _error.HeifError(
-                code=error.code,
-                subcode=error.subcode,
-                message=_libheif_cffi.ffi.string(error.message).decode(),
-            )
+        _error._assert_success(error)
+
         data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
         data = bytes(data_buffer)
         if metadata_type == "Exif":
@@ -233,12 +384,7 @@ def _read_color_profile(handle):
             handle, p_data
         )
 
-    if error.code != 0:
-        raise _error.HeifError(
-            code=error.code,
-            subcode=error.subcode,
-            message=_libheif_cffi.ffi.string(error.message).decode(),
-        )
+    _error._assert_success(error)
     data_buffer = _libheif_cffi.ffi.buffer(p_data, data_length)
     data = bytes(data_buffer)
     color_profile["data"] = data
@@ -270,12 +416,8 @@ def _read_heif_image(handle, heif_file):
     error = _libheif_cffi.lib.heif_decode_image(
         handle, p_img, colorspace, chroma, p_options,
     )
-    if error.code != 0:
-        raise _error.HeifError(
-            code=error.code,
-            subcode=error.subcode,
-            message=_libheif_cffi.ffi.string(error.message).decode(),
-        )
+    _error._assert_success(error)
+
     img = p_img[0]
 
     p_stride = _libheif_cffi.ffi.new("int *")

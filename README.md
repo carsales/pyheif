@@ -37,7 +37,9 @@ Sorry, not going to happen!
 
 ## Usage
 
-The `pyheif.read(path_or_bytes)` function can be used to read a HEIF encoded file. It can be passed any of the following:
+### Read the primary image of a HEIF encoded file
+
+The `pyheif.read(path_or_bytes)` function can be used to read the primary image of a HEIF encoded file. It can be passed any of the following:
 
 * A string path to a file on disk
 * A `pathlib.Path` path object
@@ -54,18 +56,6 @@ heif_file = pyheif.read("IMG_7424.HEIC")
 # Or using bytes directly:
 heif_file = pyheif.read(open("IMG_7424.HEIC", "rb").read())
 ```
-
-### The HeifFile object
-
-The returned `HeifFile` has the following properties:
-
-* `mode` - the image mode, e.g. "RGB" or "RGBA"
-* `size` - the size of the image as a `(width, height)` tuple of integers
-* `data` - the raw decoded file data, as bytes
-* `metadata` - a list of metadata dictionaries
-* `color_profile` - a color profile dictionary
-* `stride` - the number of bytes in a row of decoded file data
-* `bit_depth` - the number of bits in each component of a pixel
 
 ### Converting to a Pillow Image object
 
@@ -93,3 +83,58 @@ You can now use any Pillow method to manipulate the file. Here's how to convert 
 ```python
 image.save("IMG_7424.jpg", "JPEG")
 ```
+
+### Read the entire container within the HEIF file
+
+The `pyheif.open_container(path_or_bytes)` function can be used to read the HEIF container from a HEIF encoded file. It takes the same parameter as `pyheif.read()`
+
+It returns a `HeifContainer` object.
+
+## Objects
+
+### The HeifFile object
+
+The `HeifFile` has the following properties:
+
+* `mode` - the image mode, e.g. "RGB" or "RGBA"
+* `size` - the size of the image as a `(width, height)` tuple of integers
+* `data` - the raw decoded file data, as bytes
+* `metadata` - a list of metadata dictionaries
+* `color_profile` - a color profile dictionary
+* `stride` - the number of bytes in a row of decoded file data
+* `bit_depth` - the number of bits in each component of a pixel
+
+### The UndecodedHeifFile object
+
+This is a HEIF image that has not been decoded. calling the `UndecodedHeifFile.load()` method will load the data and the object will become a `HeifFile`
+### The HeifContainer object
+
+The `HeifContainer` has the following properties:
+
+* `primary_image` - the `UndecodedHeifFile` or `HeifFile` object of the primary image in the file.
+* `top_level_images` - a list of all `TopLevelImage` objects in the file.
+### The HeifTopLevelImage object
+
+The `HeifTopLevelImage` has the following properties:
+
+* `id` - the id of the image
+* `image` - the `UndecodedHeifFile` or `HeifFile` object of the image
+* `is_primary` - is this the primary image in the container
+* `depth_image` - the `HeifDepthImage` if there is one
+* `auxiliary_images` - a list of `HeifAuxiliaryImage` objects
+### The HeifDepthImage object
+
+The `HeifDepthImage` has the following properties:
+
+* `id` - the id of the image
+* `image` - the `UndecodedHeifFile` or `HeifFile` object of the image
+### The HeifAuxiliaryImage object
+
+The `HeifAuxiliaryImage` has the following properties:
+
+* `id` - the id of the image
+* `image` - the `UndecodedHeifFile` or `HeifFile` object of the image
+* `type` - a string indicating the type of auxiliary image
+
+
+

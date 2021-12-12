@@ -42,3 +42,6 @@ heif_filetype_no = 0
 heif_filetype_yes_supported = 1
 heif_filetype_yes_unsupported = 2
 heif_filetype_maybe = 3
+
+LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA = 0x2
+LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH = 0x4
