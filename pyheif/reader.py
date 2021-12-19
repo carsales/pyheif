@@ -200,8 +200,6 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
         image = _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
 
         is_primary = id == primary_image_id
-        if is_primary:
-            primary_image = image
 
         depth_image = _read_depth_image(
             handle, apply_transformations, convert_hdr_to_8bit
@@ -215,6 +213,8 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
         )
 
         top_level_images.append(top_level_image)
+        if is_primary:
+            primary_image = top_level_image
 
     return HeifContainer(primary_image, top_level_images)
 

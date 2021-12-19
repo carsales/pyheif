@@ -111,8 +111,8 @@ This is a HEIF image that has not been decoded. calling the `UndecodedHeifFile.l
 
 The `HeifContainer` has the following properties:
 
-* `primary_image` - the `UndecodedHeifFile` or `HeifFile` object of the primary image in the file.
-* `top_level_images` - a list of all `TopLevelImage` objects in the file.
+* `primary_image` - the `HeifTopLevelImage` object of the primary image in the file.
+* `top_level_images` - a list of all `HeifTopLevelImage` objects in the file.
 ### The HeifTopLevelImage object
 
 The `HeifTopLevelImage` has the following properties:

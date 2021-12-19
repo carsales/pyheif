@@ -151,7 +151,7 @@ def test_open_container(path):
     for top_level_image in container.top_level_images:
         if top_level_image.is_primary:
             n_primary_images += 1
-            assert container.primary_image == top_level_image.image
+            assert container.primary_image == top_level_image
         top_level_image.image.load()
         test_check_heif_properties(top_level_image.image)
         test_read_pillow_frombytes(top_level_image.image)
