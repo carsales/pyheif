@@ -104,8 +104,12 @@ def read(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
 
 
 def open(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
-    d = _get_bytes(fp)
-    return _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit)
+    heif_container = open_container(
+        fp,
+        apply_transformations=apply_transformations,
+        convert_hdr_to_8bit=convert_hdr_to_8bit,
+    )
+    return heif_container.primary_image.image
 
 
 def open_container(fp, *, apply_transformations=True, convert_hdr_to_8bit=True):
@@ -139,11 +143,6 @@ def _keep_refs(destructor, **refs):
     return inner
 
 
-def _read_heif_bytes(d, apply_transformations, convert_hdr_to_8bit):
-    ctx = _get_heif_context(d)
-    return _read_heif_primary_handle(ctx, apply_transformations, convert_hdr_to_8bit)
-
-
 def _get_heif_context(d):
     magic = d[:12]
     filetype_check = _libheif_cffi.lib.heif_check_filetype(magic, len(magic))
@@ -161,16 +160,6 @@ def _get_heif_context(d):
     )
     _error._assert_success(error)
     return ctx
-
-
-def _read_heif_primary_handle(ctx, apply_transformations, convert_hdr_to_8bit):
-    p_handle = _libheif_cffi.ffi.new("struct heif_image_handle **")
-    error = _libheif_cffi.lib.heif_context_get_primary_image_handle(ctx, p_handle)
-    _error._assert_success(error)
-
-    collect = _keep_refs(_libheif_cffi.lib.heif_image_handle_release, ctx=ctx)
-    handle = _libheif_cffi.ffi.gc(p_handle[0], collect)
-    return _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
 
 
 def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
