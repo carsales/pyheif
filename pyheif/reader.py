@@ -176,7 +176,8 @@ def _read_heif_primary_handle(ctx, apply_transformations, convert_hdr_to_8bit):
 def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
     image_count = _libheif_cffi.lib.heif_context_get_number_of_top_level_images(ctx)
     if image_count == 0:
-        return HeifContainer(None, [])
+        raise _error.HeifNoImageError()
+
     ids = _libheif_cffi.ffi.new("heif_item_id[]", image_count)
     image_count = _libheif_cffi.lib.heif_context_get_list_of_top_level_image_IDs(
         ctx, ids, image_count

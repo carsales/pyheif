@@ -106,13 +106,15 @@ The `HeifFile` has the following properties:
 
 ### The UndecodedHeifFile object
 
-This is a HEIF image that has not been decoded. calling the `UndecodedHeifFile.load()` method will load the data and the object will become a `HeifFile`
+This is a HEIF image that has not been decoded. Calling the `UndecodedHeifFile.load()` method will load the data and the object will become a `HeifFile`
+
 ### The HeifContainer object
 
 The `HeifContainer` has the following properties:
 
 * `primary_image` - the `HeifTopLevelImage` object of the primary image in the file.
 * `top_level_images` - a list of all `HeifTopLevelImage` objects in the file.
+
 ### The HeifTopLevelImage object
 
 The `HeifTopLevelImage` has the following properties:
@@ -122,12 +124,14 @@ The `HeifTopLevelImage` has the following properties:
 * `is_primary` - is this the primary image in the container
 * `depth_image` - the `HeifDepthImage` if there is one
 * `auxiliary_images` - a list of `HeifAuxiliaryImage` objects
+
 ### The HeifDepthImage object
 
 The `HeifDepthImage` has the following properties:
 
 * `id` - the id of the image
 * `image` - the `UndecodedHeifFile` or `HeifFile` object of the image
+
 ### The HeifAuxiliaryImage object
 
 The `HeifAuxiliaryImage` has the following properties:
