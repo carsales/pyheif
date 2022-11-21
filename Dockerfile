@@ -126,6 +126,11 @@ RUN set -ex \
     && cd "/opt/python/cp310-cp310/bin/" \
     && ./pip wheel /pyheif \
     && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+# python 3.11
+RUN set -ex \
+    && cd "/opt/python/cp311-cp311/bin/" \
+    && ./pip wheel /pyheif \
+    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
 # pypy 3.7
 RUN set -ex \
     && cd "/opt/python/pp37-pypy37_pp73/bin/" \
@@ -151,6 +156,7 @@ RUN /opt/python/cp37-cp37m/bin/pip install -r /tmp/requirements-test.txt
 RUN /opt/python/cp38-cp38/bin/pip install -r /tmp/requirements-test.txt
 RUN /opt/python/cp39-cp39/bin/pip install -r /tmp/requirements-test.txt
 RUN /opt/python/cp310-cp310/bin/pip install -r /tmp/requirements-test.txt
+RUN /opt/python/cp311-cp311/bin/pip install -r /tmp/requirements-test.txt
 RUN /opt/python/pp37-pypy37_pp73/bin/pip install -r /tmp/requirements-test.txt
 # RUN /opt/python/pp38-pypy38_pp73/bin/pip install -r /tmp/requirements-test.txt
 
@@ -183,6 +189,11 @@ RUN set -ex \
     && PNV="/opt/python/cp310-cp310/bin" \
     && $PNV/pip install /wheelhouse/*-cp310-cp310-*.whl \
     && $PNV/pytest
+# python 3.11
+RUN set -ex \
+    && PNV="/opt/python/cp311-cp311/bin" \
+    && $PNV/pip install /wheelhouse/*-cp311-cp311-*.whl \
+    && $PNV/pytest    
 # pypy 3.7
 RUN set -ex \
     && PNV="/opt/python/pp37-pypy37_pp73/bin/" \
