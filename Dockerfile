@@ -52,18 +52,18 @@ RUN set -ex \
 
 # libde265
 RUN set -ex \
-    && LIBDE265_VERSION="1.0.8" \
+    && LIBDE265_VERSION="1.0.12" \
     && curl -fLO https://github.com/strukturag/libde265/releases/download/v${LIBDE265_VERSION}/libde265-${LIBDE265_VERSION}.tar.gz \
     && tar xvf libde265-${LIBDE265_VERSION}.tar.gz \
     && cd libde265-${LIBDE265_VERSION} \
     && ./autogen.sh \
-    && ./configure --prefix /usr --disable-encoder --disable-dec265 --disable-sherlock265 --disable-dependency-tracking \
+    && CXXFLAGS="-g1 -O2" ./configure --prefix /usr --disable-encoder --disable-dec265 --disable-sherlock265 --disable-dependency-tracking \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
 # libaom
 RUN set -ex \
-    && LIBAOM_VERSION="v3.2.0" \
+    && LIBAOM_VERSION="v3.6.1" \
     && mkdir -v aom && mkdir -v aom_build && cd aom \
     && curl -fLO "https://aomedia.googlesource.com/aom/+archive/${LIBAOM_VERSION}.tar.gz" \
     && tar xvf ${LIBAOM_VERSION}.tar.gz \
@@ -75,11 +75,11 @@ RUN set -ex \
 
 # libheif
 RUN set -ex \
-    && LIBHEIF_VERSION="1.12.0" \
+    && LIBHEIF_VERSION="1.16.2" \
     && curl -fLO https://github.com/strukturag/libheif/releases/download/v${LIBHEIF_VERSION}/libheif-${LIBHEIF_VERSION}.tar.gz \
-    && tar xvf libheif-${LIBHEIF_VERSION}.tar.gz \
-    && cd libheif-${LIBHEIF_VERSION} \
-    && ./configure --prefix /usr --disable-examples \
+    && tar xvf libheif-${LIBHEIF_VERSION}.tar.gz && mv libheif-${LIBHEIF_VERSION} libheif \
+    && mkdir libheif_build && cd libheif_build \
+    && cmake --install-prefix=/usr --preset=release-noplugins -DWITH_EXAMPLES=no ../libheif \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
