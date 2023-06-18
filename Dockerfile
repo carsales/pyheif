@@ -1,4 +1,8 @@
-FROM quay.io/pypa/manylinux2014_x86_64 AS base
+ARG PLAT=manylinux2014_x86_64
+
+FROM quay.io/pypa/$PLAT AS base
+ARG PLAT
+
 
 ###############
 # Build tools #
@@ -29,6 +33,7 @@ RUN set -ex \
     && make -j $(nproc) && make install \
     && nasm --version \
     && rm -rf /build
+
 
 ################
 # Dependencies #
@@ -79,6 +84,7 @@ RUN set -ex \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
+
 ##########################
 # Build manylinux wheels #
 ##########################
@@ -91,42 +97,42 @@ COPY ./ /pyheif
 RUN set -ex \
     && cd "/opt/python/cp36-cp36m/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # python 3.7
 RUN set -ex \
     && cd "/opt/python/cp37-cp37m/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # python 3.8
 RUN set -ex \
     && cd "/opt/python/cp38-cp38/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # python 3.9
 RUN set -ex \
     && cd "/opt/python/cp39-cp39/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # python 3.10
 RUN set -ex \
     && cd "/opt/python/cp310-cp310/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # python 3.11
 RUN set -ex \
     && cd "/opt/python/cp311-cp311/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # pypy 3.7
 RUN set -ex \
     && cd "/opt/python/pp37-pypy37_pp73/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 # pypy 3.8
 RUN set -ex \
     && cd "/opt/python/pp38-pypy38_pp73/bin/" \
     && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat manylinux2014_x86_64 -w /wheelhouse
+    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 
 
 ###############
@@ -191,6 +197,7 @@ RUN set -ex \
 #     && PNV="/opt/python/pp38-pypy38_pp73/bin/" \
 #     && $PNV/pip install /wheelhouse/*-pp38-pypy38_pp73-*.whl \
 #     && $PNV/pytest
+
 
 #################
 # Upload wheels #
