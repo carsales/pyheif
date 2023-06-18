@@ -93,46 +93,15 @@ FROM build-deps AS repaired
 
 COPY ./ /pyheif
 
-# python 3.6
-RUN set -ex \
-    && cd "/opt/python/cp36-cp36m/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# python 3.7
-RUN set -ex \
-    && cd "/opt/python/cp37-cp37m/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# python 3.8
-RUN set -ex \
-    && cd "/opt/python/cp38-cp38/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# python 3.9
-RUN set -ex \
-    && cd "/opt/python/cp39-cp39/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# python 3.10
-RUN set -ex \
-    && cd "/opt/python/cp310-cp310/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# python 3.11
-RUN set -ex \
-    && cd "/opt/python/cp311-cp311/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# pypy 3.7
-RUN set -ex \
-    && cd "/opt/python/pp37-pypy37_pp73/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
-# pypy 3.8
-RUN set -ex \
-    && cd "/opt/python/pp38-pypy38_pp73/bin/" \
-    && ./pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
+RUN /opt/python/cp36-cp36m/bin/pip wheel /pyheif
+RUN /opt/python/cp37-cp37m/bin/pip wheel /pyheif
+RUN /opt/python/cp38-cp38/bin/pip wheel /pyheif
+RUN /opt/python/cp39-cp39/bin/pip wheel /pyheif
+RUN /opt/python/cp310-cp310/bin/pip wheel /pyheif
+RUN /opt/python/cp311-cp311/bin/pip wheel /pyheif
+RUN /opt/python/pp37-pypy37_pp73/bin/pip wheel /pyheif
+RUN /opt/python/pp38-pypy38_pp73/bin/pip wheel /pyheif
+RUN auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 
 
 ###############
