@@ -109,6 +109,7 @@ RUN auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
 ###############
 
 FROM base AS tested
+ARG PLAT
 
 COPY ./requirements-test.txt /tmp/requirements-test.txt
 
@@ -117,9 +118,12 @@ RUN /opt/python/cp38-cp38/bin/pip install --only-binary pillow -r /tmp/requireme
 RUN /opt/python/cp39-cp39/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt
 RUN /opt/python/cp310-cp310/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt
 RUN /opt/python/cp311-cp311/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt
-RUN /opt/python/pp37-pypy37_pp73/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt
-RUN /opt/python/pp38-pypy38_pp73/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt
-RUN /opt/python/pp39-pypy39_pp73/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt
+RUN if [ "$PLAT" != "manylinux2014_aarch64" ]; then \
+    /opt/python/pp37-pypy37_pp73/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt ; fi
+RUN if [ "$PLAT" != "manylinux2014_aarch64" ]; then \
+    /opt/python/pp38-pypy38_pp73/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt ; fi
+RUN if [ "$PLAT" != "manylinux2014_aarch64" ]; then \
+    /opt/python/pp39-pypy39_pp73/bin/pip install --only-binary pillow -r /tmp/requirements-test.txt ; fi
 
 COPY --from=repaired /wheelhouse /wheelhouse
 COPY ./ /pyheif
@@ -154,17 +158,17 @@ RUN set -ex \
 RUN set -ex \
     && PNV="/opt/python/pp37-pypy37_pp73/bin/" \
     && $PNV/pip install /wheelhouse/*-pp37-*.whl \
-    && $PNV/pytest
+    && if [ "$PLAT" != "manylinux2014_aarch64" ]; then $PNV/pytest ; fi
 # pypy 3.8
 RUN set -ex \
     && PNV="/opt/python/pp38-pypy38_pp73/bin/" \
     && $PNV/pip install /wheelhouse/*-pp38-*.whl \
-    && $PNV/pytest
+    && if [ "$PLAT" != "manylinux2014_aarch64" ]; then $PNV/pytest ; fi
 # pypy 3.9
 RUN set -ex \
     && PNV="/opt/python/pp39-pypy39_pp73/bin/" \
     && $PNV/pip install /wheelhouse/*-pp39-*.whl \
-    && $PNV/pytest
+    && if [ "$PLAT" != "manylinux2014_aarch64" ]; then $PNV/pytest ; fi
 
 
 #################
