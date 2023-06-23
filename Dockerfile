@@ -1,7 +1,6 @@
 ARG PLAT=manylinux2014_x86_64
 
 FROM quay.io/pypa/$PLAT AS base
-ARG PLAT
 
 
 ###############
@@ -90,6 +89,7 @@ RUN set -ex \
 ##########################
 
 FROM build-deps AS repaired
+ARG PLAT
 
 COPY ./ /pyheif
 
