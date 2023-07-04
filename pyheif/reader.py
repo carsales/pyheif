@@ -36,8 +36,9 @@ class HeifImage:
 
 class UndecodedHeifImage(HeifImage):
     def __init__(
-        self, heif_handle, *, apply_transformations, convert_hdr_to_8bit, **kwargs
+        self, ctx, heif_handle, *, apply_transformations, convert_hdr_to_8bit, **kwargs
     ):
+        self._ctx = ctx
         self._heif_handle = heif_handle
         self.apply_transformations = apply_transformations
         self.convert_hdr_to_8bit = convert_hdr_to_8bit
@@ -53,6 +54,8 @@ class UndecodedHeifImage(HeifImage):
         # Don't call super().close() here, we don't need to free bytes.
         if hasattr(self, "_heif_handle"):
             del self._heif_handle
+        if hasattr(self, "_ctx"):
+            del self._ctx
 
 
 # This names are deprecated an will be removed in 1.0
@@ -190,15 +193,17 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
         collect = _keep_refs(libheif.heif_image_handle_release, ctx=ctx)
         handle = ffi.gc(p_handle[0], collect)
 
-        image = _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
+        image = _read_heif_handle(
+            ctx, handle, apply_transformations, convert_hdr_to_8bit
+        )
 
         is_primary = handle_id == primary_image_id
 
         depth_image = _read_depth_image(
-            handle, apply_transformations, convert_hdr_to_8bit
+            ctx, handle, apply_transformations, convert_hdr_to_8bit
         )
         auxiliary_images = _read_all_auxiliary_images(
-            handle, apply_transformations, convert_hdr_to_8bit
+            ctx, handle, apply_transformations, convert_hdr_to_8bit
         )
 
         top_level_image = HeifTopLevelImage(
@@ -212,7 +217,7 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
     return HeifContainer(primary_image, top_level_images)
 
 
-def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
+def _read_heif_handle(ctx, handle, apply_transformations, convert_hdr_to_8bit):
     if apply_transformations:
         width = libheif.heif_image_handle_get_width(handle)
         height = libheif.heif_image_handle_get_height(handle)
@@ -226,6 +231,7 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
     color_profile = _read_color_profile(handle)
 
     heif_file = UndecodedHeifImage(
+        ctx,
         handle,
         size=(width, height),
         has_alpha=has_alpha,
@@ -238,7 +244,7 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
     return heif_file
 
 
-def _read_depth_image(handle, apply_transformations, convert_hdr_to_8bit):
+def _read_depth_image(ctx, handle, apply_transformations, convert_hdr_to_8bit):
     has_depth_image = libheif.heif_image_handle_has_depth_image(handle)
     if has_depth_image:
         p_depth_image_id = ffi.new("heif_item_id *")
@@ -257,13 +263,13 @@ def _read_depth_image(handle, apply_transformations, convert_hdr_to_8bit):
             return HeifDepthImage(
                 depth_id,
                 _read_heif_handle(
-                    depth_handle, apply_transformations, convert_hdr_to_8bit
+                    ctx, depth_handle, apply_transformations, convert_hdr_to_8bit
                 ),
             )
     return None
 
 
-def _read_all_auxiliary_images(handle, apply_transformations, convert_hdr_to_8bit):
+def _read_all_auxiliary_images(ctx, handle, apply_transformations, convert_hdr_to_8bit):
     aux_count = libheif.heif_image_handle_get_number_of_auxiliary_images(
         handle,
         _constants.LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA
@@ -282,14 +288,14 @@ def _read_all_auxiliary_images(handle, apply_transformations, convert_hdr_to_8bi
     auxiliaries = []
     for aux_id in aux_ids:
         aux_image = _read_auxiliary_image(
-            handle, aux_id, apply_transformations, convert_hdr_to_8bit
+            ctx, handle, aux_id, apply_transformations, convert_hdr_to_8bit
         )
         auxiliaries.append(aux_image)
     return auxiliaries
 
 
 def _read_auxiliary_image(
-    handle, auxiliary_image_id, apply_transformations, convert_hdr_to_8bit
+    ctx, handle, auxiliary_image_id, apply_transformations, convert_hdr_to_8bit
 ):
     p_aux_handle = ffi.new("struct heif_image_handle **")
     error = libheif.heif_image_handle_get_auxiliary_image_handle(
@@ -309,7 +315,7 @@ def _read_auxiliary_image(
     return HeifAuxiliaryImage(
         auxiliary_image_id,
         aux_type,
-        _read_heif_handle(aux_handle, apply_transformations, convert_hdr_to_8bit),
+        _read_heif_handle(ctx, aux_handle, apply_transformations, convert_hdr_to_8bit),
     )
 
 
