@@ -43,5 +43,14 @@ heif_filetype_yes_supported = 1
 heif_filetype_yes_unsupported = 2
 heif_filetype_maybe = 3
 
+heif_item_property_type_user_description = encode_fourcc("udes")
+heif_item_property_type_transform_mirror = encode_fourcc("imir")
+heif_item_property_type_transform_rotation = encode_fourcc("irot")
+heif_item_property_type_transform_crop = encode_fourcc("clap")
+heif_item_property_type_image_size = encode_fourcc("ispe")
+
+heif_transform_mirror_direction_vertical = 0
+heif_transform_mirror_direction_horizontal = 1
+
 LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA = 0x2
 LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH = 0x4

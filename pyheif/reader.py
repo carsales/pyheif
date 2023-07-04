@@ -5,17 +5,19 @@ import warnings
 
 from _libheif_cffi import ffi, lib as libheif
 from . import constants as _constants
+from .transformations import Transformations
 from .error import _assert_success, HeifNoImageError
 
 
 class HeifImage:
     def __init__(
-        self, *, size, has_alpha, bit_depth, metadata, color_profile, data, stride
+        self, *, size, has_alpha, bit_depth, transformations, metadata, color_profile, data, stride
     ):
         self.size = size
         self.has_alpha = has_alpha
         self.mode = "RGBA" if has_alpha else "RGB"
         self.bit_depth = bit_depth
+        self.transformations = transformations
         self.metadata = metadata
         self.color_profile = color_profile
         self.data = data
@@ -227,6 +229,7 @@ def _read_heif_handle(ctx, handle, apply_transformations, convert_hdr_to_8bit):
     has_alpha = bool(libheif.heif_image_handle_has_alpha_channel(handle))
     bit_depth = libheif.heif_image_handle_get_luma_bits_per_pixel(handle)
 
+    transformations = _read_transformations(ctx, handle)
     metadata = _read_metadata(handle)
     color_profile = _read_color_profile(handle)
 
@@ -236,6 +239,7 @@ def _read_heif_handle(ctx, handle, apply_transformations, convert_hdr_to_8bit):
         size=(width, height),
         has_alpha=has_alpha,
         bit_depth=bit_depth,
+        transformations=transformations,
         metadata=metadata,
         color_profile=color_profile,
         apply_transformations=apply_transformations,
@@ -317,6 +321,43 @@ def _read_auxiliary_image(
         aux_type,
         _read_heif_handle(ctx, aux_handle, apply_transformations, convert_hdr_to_8bit),
     )
+
+
+def _read_transformations(ctx, handle):
+    transformations = Transformations(
+        libheif.heif_image_handle_get_ispe_width(handle),
+        libheif.heif_image_handle_get_ispe_height(handle)
+    )
+    item_id = libheif.heif_image_handle_get_item_id(handle)
+    properties_count = libheif.heif_item_get_transformation_properties(
+        ctx, item_id, ffi.NULL, 0
+    )
+    if properties_count:
+        properties = ffi.new("heif_property_id[]", properties_count)
+        libheif.heif_item_get_transformation_properties(
+            ctx, item_id, properties, properties_count
+        )
+        for prop in properties:
+            prop_type = libheif.heif_item_get_property_type(ctx, item_id, prop)
+            if prop_type == _constants.heif_item_property_type_transform_mirror:
+                mirror = libheif.heif_item_get_property_transform_mirror(ctx, item_id, prop)
+                horizontal = mirror == _constants.heif_transform_mirror_direction_horizontal
+                transformations.apply_orientation(
+                    flip_horizontal=horizontal, flip_vertical=not horizontal
+                )
+            elif prop_type == _constants.heif_item_property_type_transform_rotation:
+                rotate = libheif.heif_item_get_property_transform_rotation_ccw(ctx, item_id, prop)
+                transformations.apply_orientation(turn_ccw=rotate // 90)
+            elif prop_type == _constants.heif_item_property_type_transform_crop:
+                crop = ffi.new("int[4]")
+                libheif.heif_item_get_property_transform_crop_borders(
+                    ctx, item_id, prop, transformations.ispe_width, transformations.ispe_height,
+                    crop + 0, crop + 1, crop + 2, crop + 3
+                )
+                crop[2] = transformations.ispe_width - crop[2]
+                crop[3] = transformations.ispe_height - crop[3]
+                transformations.apply_crop(*crop)
+    return transformations
 
 
 def _read_metadata(handle):
