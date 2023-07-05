@@ -5,7 +5,7 @@ import warnings
 
 from _libheif_cffi import ffi, lib as libheif
 from . import constants as _constants
-from . import error as _error
+from .error import _assert_success, HeifNoImageError
 
 
 class HeifFile:
@@ -156,14 +156,14 @@ def _get_heif_context(d):
     ctx = ffi.gc(ctx, collect, size=len(d))
 
     error = libheif.heif_context_read_from_memory_without_copy(ctx, d, len(d), ffi.NULL)
-    _error._assert_success(error)
+    _assert_success(error)
     return ctx
 
 
 def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
     image_count = libheif.heif_context_get_number_of_top_level_images(ctx)
     if image_count == 0:
-        raise _error.HeifNoImageError()
+        raise HeifNoImageError()
 
     ids = ffi.new("heif_item_id[]", image_count)
     image_count = libheif.heif_context_get_list_of_top_level_image_IDs(
@@ -172,7 +172,7 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
 
     p_primary_image_id = ffi.new("heif_item_id *")
     error = libheif.heif_context_get_primary_image_ID(ctx, p_primary_image_id)
-    _error._assert_success(error)
+    _assert_success(error)
     primary_image_id = p_primary_image_id[0]
     primary_image = None
     top_level_images = []
@@ -180,7 +180,7 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
     for id in ids:
         p_handle = ffi.new("struct heif_image_handle **")
         error = libheif.heif_context_get_image_handle(ctx, id, p_handle)
-        _error._assert_success(error)
+        _assert_success(error)
 
         collect = _keep_refs(libheif.heif_image_handle_release, ctx=ctx)
         handle = ffi.gc(p_handle[0], collect)
@@ -242,7 +242,7 @@ def _read_depth_image(handle, apply_transformations, convert_hdr_to_8bit):
             error = libheif.heif_image_handle_get_depth_image_handle(
                 handle, depth_id, p_depth_handle
             )
-            _error._assert_success(error)
+            _assert_success(error)
             collect = _keep_refs(libheif.heif_image_handle_release, handle=handle)
             depth_handle = ffi.gc(p_depth_handle[0], collect)
             return HeifDepthImage(
@@ -286,14 +286,14 @@ def _read_auxiliary_image(
     error = libheif.heif_image_handle_get_auxiliary_image_handle(
         handle, auxiliary_image_id, p_aux_handle
     )
-    _error._assert_success(error)
+    _assert_success(error)
 
     collect = _keep_refs(libheif.heif_image_handle_release, handle=handle)
     aux_handle = ffi.gc(p_aux_handle[0], collect)
 
     p_aux_type = ffi.new("char **")
     error = libheif.heif_image_handle_get_auxiliary_type(aux_handle, p_aux_type)
-    _error._assert_success(error)
+    _assert_success(error)
     aux_type = ffi.string(p_aux_type[0]).decode()
     libheif.heif_image_handle_free_auxiliary_types(aux_handle, p_aux_type)
 
@@ -322,7 +322,7 @@ def _read_metadata(handle):
         data_length = libheif.heif_image_handle_get_metadata_size(handle, ids[i])
         p_data = ffi.new("char[]", data_length)
         error = libheif.heif_image_handle_get_metadata(handle, ids[i], p_data)
-        _error._assert_success(error)
+        _assert_success(error)
 
         data_buffer = ffi.buffer(p_data, data_length)
         data = bytes(data_buffer)
@@ -356,7 +356,7 @@ def _read_color_profile(handle):
         p_data = ffi.new("char[]", data_length)
         error = libheif.heif_image_handle_get_raw_color_profile(handle, p_data)
 
-    _error._assert_success(error)
+    _assert_success(error)
     data_buffer = ffi.buffer(p_data, data_length)
     data = bytes(data_buffer)
     color_profile["data"] = data
@@ -386,7 +386,7 @@ def _read_heif_image(handle, heif_file):
     error = libheif.heif_decode_image(
         handle, p_img, colorspace, chroma, p_options,
     )
-    _error._assert_success(error)
+    _assert_success(error)
 
     img = p_img[0]
 
