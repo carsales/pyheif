@@ -138,7 +138,7 @@ def _get_bytes(fp, length=None):
 def _keep_refs(destructor, **refs):
     """
     Keep refs to passed arguments until `inner` callback exist.
-    This prevents collecting parent objects until all children collcted.
+    This prevents collecting parent objects until all children collected.
     """
 
     def inner(cdata):
@@ -182,9 +182,9 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
     primary_image = None
     top_level_images = []
 
-    for id in ids:
+    for handle_id in ids:
         p_handle = ffi.new("struct heif_image_handle **")
-        error = libheif.heif_context_get_image_handle(ctx, id, p_handle)
+        error = libheif.heif_context_get_image_handle(ctx, handle_id, p_handle)
         _assert_success(error)
 
         collect = _keep_refs(libheif.heif_image_handle_release, ctx=ctx)
@@ -192,7 +192,7 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
 
         image = _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit)
 
-        is_primary = id == primary_image_id
+        is_primary = handle_id == primary_image_id
 
         depth_image = _read_depth_image(
             handle, apply_transformations, convert_hdr_to_8bit
@@ -202,7 +202,7 @@ def _read_heif_container(ctx, apply_transformations, convert_hdr_to_8bit):
         )
 
         top_level_image = HeifTopLevelImage(
-            id, image, is_primary, depth_image, auxiliary_images
+            handle_id, image, is_primary, depth_image, auxiliary_images
         )
 
         top_level_images.append(top_level_image)
