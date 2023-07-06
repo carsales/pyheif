@@ -8,7 +8,7 @@ from . import constants as _constants
 from .error import _assert_success, HeifNoImageError
 
 
-class HeifFile:
+class HeifImage:
     def __init__(
         self, *, size, has_alpha, bit_depth, metadata, color_profile, data, stride
     ):
@@ -34,7 +34,7 @@ class HeifFile:
         pass  # TODO: release self.data here?
 
 
-class UndecodedHeifFile(HeifFile):
+class UndecodedHeifImage(HeifImage):
     def __init__(
         self, heif_handle, *, apply_transformations, convert_hdr_to_8bit, **kwargs
     ):
@@ -46,13 +46,18 @@ class UndecodedHeifFile(HeifFile):
     def load(self):
         self.data, self.stride = _read_heif_image(self._heif_handle, self)
         self.close()
-        self.__class__ = HeifFile
+        self.__class__ = HeifImage
         return self
 
     def close(self):
         # Don't call super().close() here, we don't need to free bytes.
         if hasattr(self, "_heif_handle"):
             del self._heif_handle
+
+
+# This names are deprecated an will be removed in 1.0
+HeifFile = HeifImage
+UndecodedHeifFile = UndecodedHeifImage
 
 
 class HeifContainer:
@@ -90,7 +95,7 @@ def check(fp):
 
 
 def read_heif(fp, apply_transformations=True):
-    warnings.warn("read_heif is deprecated, use read instead", DeprecationWarning)
+    warnings.warn("read_heif is deprecated, use read() instead", DeprecationWarning)
     return read(fp, apply_transformations=apply_transformations)
 
 
@@ -216,7 +221,7 @@ def _read_heif_handle(handle, apply_transformations, convert_hdr_to_8bit):
     metadata = _read_metadata(handle)
     color_profile = _read_color_profile(handle)
 
-    heif_file = UndecodedHeifFile(
+    heif_file = UndecodedHeifImage(
         handle,
         size=(width, height),
         has_alpha=has_alpha,
