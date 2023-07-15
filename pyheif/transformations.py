@@ -1,4 +1,14 @@
 class Transformations:
+    """
+    Represents image transformation stored in irot, imir and clap boxes.
+    Unlike boxes in the file, these operations have only one proper order:
+    you always should crop the image first, then rotate according to orientation_tag.
+    imir and irot boxes stored in single orientation_tag. orientation_tag have
+    has the same meaning as orientation tag in EXIF (values from 1 to 8)
+    or could be 0 is there is no irot or imir boxes.
+    In general, you may transform the image according to this tag,
+    and if orientation_tag is 0, apply the value from EXIF metadata.
+    """
     # EXIF orientation tag values decomposed by operations
     # 1: 0b000: NONE
     # 2: 0b001: FLIP_LEFT_RIGHT
@@ -8,12 +18,12 @@ class Transformations:
     # 6: 0b110: ROTATE_270_CCW
     # 7: 0b111: TRANSVERSE
     # 8: 0b101: ROTATE_90_CCW
+    orientation_tag = 0
+    crop = (0, 0, 1, 1)
+
     _tag_to_bitmask = [0b000, 0b000, 0b001, 0b011, 0b010, 0b100, 0b110, 0b111, 0b101]
     _bitmask_to_tag = [1, 2, 4, 3, 5, 8, 6, 7]
     _rotation_to_bitmask = [0b000, 0b101, 0b011, 0b110]
-
-    orientation_tag = 1
-    crop = (0, 0, 1, 1)
 
     def __init__(self, ispe_width, ispe_height):
         self.crop = (0, 0, ispe_width, ispe_height)
