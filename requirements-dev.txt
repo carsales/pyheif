@@ -1,5 +1,5 @@
 -r requirements-test.txt
 
-black==19.10b0
+black==24.3.0
 pipdeptree==0.13.2
 setuptools==70.0.0
