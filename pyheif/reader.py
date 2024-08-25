@@ -300,7 +300,7 @@ def _read_auxiliary_image(
     error = libheif.heif_image_handle_get_auxiliary_type(aux_handle, p_aux_type)
     _assert_success(error)
     aux_type = ffi.string(p_aux_type[0]).decode()
-    libheif.heif_image_handle_free_auxiliary_types(aux_handle, p_aux_type)
+    libheif.heif_image_handle_release_auxiliary_type(aux_handle, p_aux_type)
 
     return HeifAuxiliaryImage(
         auxiliary_image_id,
