@@ -4,7 +4,7 @@ from cffi import FFI
 
 ffibuilder = FFI()
 
-with open("libheif/heif.h") as f:
+with open("libheif/libheif_api.h") as f:
     ffibuilder.cdef(f.read())
 
 include_dirs = ["/usr/local/include", "/usr/include", "/opt/local/include"]
@@ -18,7 +18,7 @@ if homebrew_prefix:
 ffibuilder.set_source(
     "_libheif_cffi",
     """
-     #include "libheif/heif.h"
+    #include <libheif/heif.h>
     """,
     include_dirs=include_dirs,
     library_dirs=library_dirs,

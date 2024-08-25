@@ -1,4 +1,4 @@
-import _libheif_cffi
+from _libheif_cffi import ffi
 
 
 class HeifError(Exception):
@@ -27,5 +27,5 @@ def _assert_success(error):
         raise HeifError(
             code=error.code,
             subcode=error.subcode,
-            message=_libheif_cffi.ffi.string(error.message).decode(),
+            message=ffi.string(error.message).decode(),
         )
