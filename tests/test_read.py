@@ -15,6 +15,18 @@ avif_files = list(Path().glob("tests/images/**/*.avif"))
 heif_files = heic_files + hif_files + avif_files
 
 
+def create_pillow_image(heif_file):
+    heif_file = heif_file.load()
+    return Image.frombytes(
+        heif_file.mode,
+        heif_file.size,
+        heif_file.data,
+        "raw",
+        heif_file.mode,
+        heif_file.stride,
+    )
+
+
 @pytest.mark.parametrize("path", heif_files)
 def test_check(path):
     filetype = pyheif.check(path)
@@ -84,14 +96,52 @@ def test_read_icc_color_profile(heif_file):
 
 
 def test_read_pillow_frombytes(heif_file):
-    image = Image.frombytes(
-        heif_file.mode,
-        heif_file.size,
-        heif_file.data,
-        "raw",
-        heif_file.mode,
-        heif_file.stride,
+    create_pillow_image(heif_file)
+
+
+def apply_transformations(im, transformations):
+    im = im.crop(transformations.crop)
+    method = {
+        2: Image.Transpose.FLIP_LEFT_RIGHT,
+        3: Image.Transpose.ROTATE_180,
+        4: Image.Transpose.FLIP_TOP_BOTTOM,
+        5: Image.Transpose.TRANSPOSE,
+        6: Image.Transpose.ROTATE_270,
+        7: Image.Transpose.TRANSVERSE,
+        8: Image.Transpose.ROTATE_90,
+    }.get(transformations.orientation_tag)
+    if method:
+        im = im.transpose(method)
+    return im
+
+
+@pytest.mark.parametrize("path", [
+    "tests/images/parfait.heic",  # orientation
+    "tests/images/tree-with-transforms.avif",  # orientation + crop
+    "tests/images/tree-with-transparency.heic",  # to transformations
+])
+def test_read_transformations(path):
+    heif_native = pyheif.open(path, apply_transformations=False)
+    width, height = heif_native.size
+    
+    orientation_tag = heif_native.transformations.orientation_tag
+    assert 0 <= orientation_tag <= 8
+
+    crop = heif_native.transformations.crop
+    assert 0 <= crop[0] < width
+    assert 0 <= crop[1] < height
+    assert 1 <= crop[2] <= width - crop[0]
+    assert 1 <= crop[3] <= height - crop[1]
+
+    heif_transformed = pyheif.open(path)
+    assert heif_native.transformations == heif_transformed.transformations
+
+    native = apply_transformations(
+        create_pillow_image(heif_native),
+        heif_native.transformations
     )
+    transformed = create_pillow_image(heif_transformed)
+    assert native == transformed
 
 
 @pytest.mark.parametrize("path", heif_files)
@@ -167,3 +217,15 @@ def test_open_container(path):
         auxiliary_image.image.load()
         test_check_heif_properties(auxiliary_image.image)
         test_read_pillow_frombytes(auxiliary_image.image)
+
+
+def test_no_transformations():
+    transformed = pyheif.read("tests/images/arrow.heic")
+    native = pyheif.read("tests/images/arrow.heic", apply_transformations=False)
+    assert transformed.size[0] != transformed.size[1]
+    assert transformed.size == native.size[::-1]
+
+    transformed = create_pillow_image(transformed)
+    native = create_pillow_image(native)
+
+    assert transformed == native.transpose(Image.ROTATE_270)

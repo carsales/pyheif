@@ -19,6 +19,10 @@ ffibuilder.set_source(
     "_libheif_cffi",
     """
     #include <libheif/heif.h>
+    // 1.17.0+ stores properties in different files
+    #if LIBHEIF_NUMERIC_VERSION >= 0x01110000
+        #include <libheif/heif_properties.h>
+    #endif
     """,
     include_dirs=include_dirs,
     library_dirs=library_dirs,

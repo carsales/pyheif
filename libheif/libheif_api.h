@@ -16,6 +16,7 @@ struct heif_error
 };
 
 typedef uint32_t heif_item_id;
+typedef uint32_t heif_property_id;
 
 enum heif_chroma
 {
@@ -114,8 +115,20 @@ struct heif_error heif_context_get_image_handle(struct heif_context* ctx,
                                                 heif_item_id id,
                                                 struct heif_image_handle**);
 
+// ========================= heif_image_handle =========================
+
+// An heif_image_handle is a handle to a logical image in the HEIF file.
+// To get the actual pixel data, you have to decode the handle to an heif_image.
+// An heif_image_handle also gives you access to the thumbnails and Exif data
+// associated with an image.
+
+// Once you obtained an heif_image_handle, you can already release the heif_context,
+// since it is internally ref-counted.
+
 // Release image handle.
 void heif_image_handle_release(const struct heif_image_handle*);
+
+heif_item_id heif_image_handle_get_item_id(const struct heif_image_handle* handle);
 
 // Get the resolution of an image.
 int heif_image_handle_get_width(const struct heif_image_handle* handle);
@@ -124,9 +137,63 @@ int heif_image_handle_get_height(const struct heif_image_handle* handle);
 
 int heif_image_handle_has_alpha_channel(const struct heif_image_handle*);
 
+// Get the image width from the 'ispe' box. This is the original image size without
+// any transformations applied to it. Do not use this unless you know exactly what
+// you are doing.
+int heif_image_handle_get_ispe_width(const struct heif_image_handle* handle);
+
+int heif_image_handle_get_ispe_height(const struct heif_image_handle* handle);
+
 // Returns -1 on error, e.g. if this information is not present in the image.
 int heif_image_handle_get_luma_bits_per_pixel(const struct heif_image_handle*);
 
+
+// ------------------------- item properties -------------------------
+
+enum heif_item_property_type
+{
+//  heif_item_property_unknown = -1,
+  heif_item_property_type_invalid = 0,
+};
+
+// Returns all transformative properties in the correct order.
+// This includes "irot", "imir", "clap".
+// The number of properties is returned, which are not more than 'count' if (out_list != nullptr).
+// By setting out_list==nullptr, you can query the number of properties, 'count' is ignored.
+int heif_item_get_transformation_properties(const struct heif_context* context,
+                                            heif_item_id id,
+                                            heif_property_id* out_list,
+                                            int count);
+
+enum heif_item_property_type heif_item_get_property_type(const struct heif_context* context,
+                                                         heif_item_id id,
+                                                         heif_property_id property_id);
+
+enum heif_transform_mirror_direction
+{
+  heif_transform_mirror_direction_vertical = 0,    // flip image vertically
+  heif_transform_mirror_direction_horizontal = 1   // flip image horizontally
+};
+
+// Will return 'heif_transform_mirror_direction_invalid' in case of error.
+enum heif_transform_mirror_direction heif_item_get_property_transform_mirror(const struct heif_context* context,
+                                                                             heif_item_id itemId,
+                                                                             heif_property_id propertyId);
+
+// Returns only 0, 90, 180, or 270 angle values.
+// Returns -1 in case of error (but it will only return an error in case of wrong usage).
+int heif_item_get_property_transform_rotation_ccw(const struct heif_context* context,
+                                                  heif_item_id itemId,
+                                                  heif_property_id propertyId);
+
+// Returns the number of pixels that should be removed from the four edges.
+// Because of the way this data is stored, you have to pass the image size at the moment of the crop operation
+// to compute the cropped border sizes.
+void heif_item_get_property_transform_crop_borders(const struct heif_context* context,
+                                                   heif_item_id itemId,
+                                                   heif_property_id propertyId,
+                                                   int image_width, int image_height,
+                                                   int* left, int* top, int* right, int* bottom);
 
 // ------------------------- depth images -------------------------
 
