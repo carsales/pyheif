@@ -10,7 +10,7 @@ with open("libheif/libheif_api.h") as f:
 include_dirs = ["/usr/local/include", "/usr/include", "/opt/local/include"]
 library_dirs = ["/usr/local/lib", "/usr/lib", "/lib", "/opt/local/lib"]
 
-homebrew_prefix = os.getenv("HOMEBREW_PREFIX")
+homebrew_prefix = os.getenv("PATH")
 if homebrew_prefix:
     include_dirs.append(os.path.join(homebrew_prefix, "include"))
     library_dirs.append(os.path.join(homebrew_prefix, "lib"))
