@@ -2,4 +2,4 @@
 
 black==24.3.0
 pipdeptree==0.13.2
-setuptools==70.0.0
+setuptools==78.1.1
