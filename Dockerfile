@@ -1,48 +1,22 @@
-ARG PLAT=manylinux2014_x86_64
+ARG LIBHEIF_VERSION=1.21.2
+ARG PYTHON_VERSION=cp312-cp312
 
-FROM quay.io/pypa/$PLAT:2024.08.12-1 AS base
-
-
-###############
-# Build tools #
-###############
-
-FROM base AS build-tools
+# -------------------------------- base ------------------------------------------------
+FROM quay.io/pypa/manylinux_2_28:2026.02.06-1 AS base
 
 WORKDIR /build
 
-# pkg-config
+RUN dnf install -y nasm \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+RUN pipx install --force "cmake<4"
+
+
+# -------------------------------- libheif-deps ----------------------------------------
+FROM base AS libheif-deps
+
+ENV X265_VERSION=4.1
 RUN set -ex \
-    && PKG_CONFIG_VERSION="0.29.2" \
-    && curl -fLO https://pkg-config.freedesktop.org/releases/pkg-config-${PKG_CONFIG_VERSION}.tar.gz \
-    && tar xvf pkg-config-${PKG_CONFIG_VERSION}.tar.gz \
-    && cd pkg-config-${PKG_CONFIG_VERSION} \
-    && ./configure \
-    && make -j $(nproc) && make install \
-    && pkg-config --version \
-    && rm -rf /build
-
-# nasm
-RUN set -ex \
-    && NASM_VERSION="2.15.02" \
-    && curl -fLO https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/nasm-${NASM_VERSION}.tar.gz \
-    && tar xvf nasm-${NASM_VERSION}.tar.gz \
-    && cd nasm-${NASM_VERSION} \
-    && ./configure \
-    && make -j $(nproc) && make install \
-    && nasm --version \
-    && rm -rf /build
-
-
-################
-# Dependencies #
-################
-
-FROM build-tools AS build-deps
-
-# x265
-RUN set -ex \
-    && X265_VERSION="3.6" \
     && curl -fLO https://bitbucket.org/multicoreware/x265_git/downloads/x265_${X265_VERSION}.tar.gz \
     && tar xvf x265_${X265_VERSION}.tar.gz \
     && cd x265_${X265_VERSION} \
@@ -50,20 +24,19 @@ RUN set -ex \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
-# libde265
+ENV LIBDE265_VERSION=1.0.16
 RUN set -ex \
-    && LIBDE265_VERSION="1.0.15" \
     && curl -fLO https://github.com/strukturag/libde265/releases/download/v${LIBDE265_VERSION}/libde265-${LIBDE265_VERSION}.tar.gz \
     && tar xvf libde265-${LIBDE265_VERSION}.tar.gz \
     && cd libde265-${LIBDE265_VERSION} \
     && ./autogen.sh \
-    && CXXFLAGS="-g1 -O2" ./configure --prefix /usr --disable-encoder --disable-dec265 --disable-sherlock265 --disable-dependency-tracking \
+    && CXXFLAGS="-g1 -O2" ./configure --prefix /usr --disable-encoder --disable-dec265 \
+        --disable-sherlock265 --disable-dependency-tracking \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
-# libaom
+ENV LIBAOM_VERSION=v3.13.1
 RUN set -ex \
-    && LIBAOM_VERSION="v3.8.3" \
     && mkdir -v aom && mkdir -v aom_build && cd aom \
     && curl -fLO "https://aomedia.googlesource.com/aom/+archive/${LIBAOM_VERSION}.tar.gz" \
     && tar xvf ${LIBAOM_VERSION}.tar.gz \
@@ -73,13 +46,10 @@ RUN set -ex \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
-##################
-# libheif 1.18.2 #
-##################
 
-FROM build-deps AS libheif
-ARG LIBHEIF_VERSION=1.18.2
-ARG PLAT
+# -------------------------------- libheif ---------------------------------------------
+FROM libheif-deps AS libheif
+ARG LIBHEIF_VERSION
 
 RUN set -ex \
     && LIBHEIF_VERSION="$LIBHEIF_VERSION" \
@@ -90,108 +60,31 @@ RUN set -ex \
     && make -j $(nproc) && make install && ldconfig \
     && rm -rf /build
 
+
+# -------------------------------- wheel -----------------------------------------------
+FROM libheif AS wheel
+ARG PYTHON_VERSION
+
 COPY ./ /pyheif
 
 RUN set -ex \
-    && PNV="/opt/python/cp310-cp310/bin" \
-    && $PNV/pip wheel /pyheif \
-    && auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse \
-    && $PNV/pip install --only-binary pillow==10.4.0 -r /pyheif/requirements-test.txt \
-    && $PNV/pip install /wheelhouse/*-cp310-*.whl \
-    && cd /pyheif && $PNV/pytest
-
-##########################
-# Build manylinux wheels #
-##########################
-
-FROM libheif AS all-pythons-repaired
-ARG PLAT
-
-COPY ./ /pyheif
-
-RUN /opt/python/cp37-cp37m/bin/pip wheel /pyheif
-RUN /opt/python/cp38-cp38/bin/pip wheel /pyheif
-RUN /opt/python/cp39-cp39/bin/pip wheel /pyheif
-RUN /opt/python/cp310-cp310/bin/pip wheel /pyheif
-RUN /opt/python/cp311-cp311/bin/pip wheel /pyheif
-RUN /opt/python/cp312-cp312/bin/pip wheel /pyheif
-RUN /opt/python/pp39-pypy39_pp73/bin/pip wheel /pyheif
-RUN /opt/python/pp310-pypy310_pp73/bin/pip wheel /pyheif
-RUN auditwheel repair pyheif*.whl --plat $PLAT -w /wheelhouse
+    && /opt/python/${PYTHON_VERSION}/bin/pip wheel /pyheif \
+    && auditwheel repair pyheif*.whl -w /wheels
 
 
-###############
-# Test wheels #
-###############
-
+# -------------------------------- tested ----------------------------------------------
 FROM base AS tested
+ARG PYTHON_VERSION
 
 COPY ./requirements-test.txt /tmp/requirements-test.txt
 
-RUN /opt/python/cp37-cp37m/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/cp38-cp38/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/cp39-cp39/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/cp310-cp310/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/cp311-cp311/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/cp312-cp312/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/pp39-pypy39_pp73/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
-RUN /opt/python/pp310-pypy310_pp73/bin/pip install --only-binary pillow==10.4.0 -r /tmp/requirements-test.txt
+RUN /opt/python/${PYTHON_VERSION}/bin/pip install --only-binary :all: -r /tmp/requirements-test.txt
 
-COPY --from=all-pythons-repaired /wheelhouse /wheelhouse
+COPY --from=wheel /wheels /wheels
 COPY ./ /pyheif
 WORKDIR /pyheif
 
-# python 3.7
 RUN set -ex \
-    && PNV="/opt/python/cp37-cp37m/bin" \
-    && $PNV/pip install /wheelhouse/*-cp37-*.whl \
+    && PNV="/opt/python/${PYTHON_VERSION}/bin" \
+    && $PNV/pip install /wheels/pyheif-*.whl \
     && $PNV/pytest
-# python 3.8
-RUN set -ex \
-    && PNV="/opt/python/cp38-cp38/bin" \
-    && $PNV/pip install /wheelhouse/*-cp38-*.whl \
-    && $PNV/pytest
-# python 3.9
-RUN set -ex \
-    && PNV="/opt/python/cp39-cp39/bin" \
-    && $PNV/pip install /wheelhouse/*-cp39-*.whl \
-    && $PNV/pytest
-# python 3.10
-RUN set -ex \
-    && PNV="/opt/python/cp310-cp310/bin" \
-    && $PNV/pip install /wheelhouse/*-cp310-*.whl \
-    && $PNV/pytest
-# python 3.11
-RUN set -ex \
-    && PNV="/opt/python/cp311-cp311/bin" \
-    && $PNV/pip install /wheelhouse/*-cp311-*.whl \
-    && $PNV/pytest    
-# python 3.12
-RUN set -ex \
-    && PNV="/opt/python/cp312-cp312/bin" \
-    && $PNV/pip install /wheelhouse/*-cp312-*.whl \
-    && $PNV/pytest    
-# pypy 3.9
-RUN set -ex \
-    && PNV="/opt/python/pp39-pypy39_pp73/bin" \
-    && $PNV/pip install /wheelhouse/*-pp39-*.whl \
-    && $PNV/pytest
-# pypy 3.10
-RUN set -ex \
-    && PNV="/opt/python/pp310-pypy310_pp73/bin" \
-    && $PNV/pip install /wheelhouse/*-pp310-*.whl \
-    && $PNV/pytest
-
-
-#################
-# Upload wheels #
-#################
-
-FROM tested AS uploaded
-
-ARG PYPI_USERNAME
-ARG PYPI_PASSWORD
-RUN set -ex \
-    && cd "/opt/python/cp38-cp38/bin/" \
-    && ./pip install twine \
-    && ./twine upload /wheelhouse/*manylinux2014*.whl -u ${PYPI_USERNAME} -p ${PYPI_PASSWORD} \

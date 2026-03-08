@@ -296,6 +296,7 @@ struct heif_color_profile_nclx
   float color_primary_green_x, color_primary_green_y;
   float color_primary_blue_x, color_primary_blue_y;
   float color_primary_white_x, color_primary_white_y;
+  ...;
 };
 
 // Returns 'heif_error_Color_profile_does_not_exist' when there is no NCLX profile.
@@ -356,6 +357,7 @@ struct heif_color_conversion_options
   // Set this field to 'true' if you want to make sure that the specified algorithm is used even
   // at the cost of slightly higher computation times.
   uint8_t only_use_preferred_chroma_algorithm;
+  ...;
 };
 
 
@@ -398,6 +400,7 @@ struct heif_decoding_options
   // version 5 options
 
   struct heif_color_conversion_options color_conversion_options;
+  ...;
 };
 
 

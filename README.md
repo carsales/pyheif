@@ -1,5 +1,5 @@
 # pyheif
-Python 3.6+ interface to [libheif](https://github.com/strukturag/libheif) library using CFFI
+Python interface to [libheif](https://github.com/strukturag/libheif) library using CFFI
 
 *Note*: currently only reading is supported.
 
@@ -67,8 +67,8 @@ import pyheif
 
 heif_file = pyheif.read("IMG_7424.HEIC")
 image = Image.frombytes(
-    heif_file.mode, 
-    heif_file.size, 
+    heif_file.mode,
+    heif_file.size,
     heif_file.data,
     "raw",
     heif_file.mode,
@@ -139,6 +139,3 @@ The `HeifAuxiliaryImage` has the following properties:
 * `id` - the id of the image
 * `image` - the `UndecodedHeifImage` or `HeifImage` object of the image
 * `type` - a string indicating the type of auxiliary image
-
-
-

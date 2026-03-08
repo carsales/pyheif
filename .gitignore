@@ -107,3 +107,4 @@ venv.bak/
 
 #scrath
 scratch/
+.docker_build-*

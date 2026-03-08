@@ -16,10 +16,10 @@ setup(
     cffi_modules=["libheif/libheif_build.py:ffibuilder"],
     author="Anthony Paes",
     author_email="ant32bit-carsales@users.noreply.github.com",
-    description="Python 3.6+ interface to libheif library",
+    description="Python interface to libheif library",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">= 3.6",
+    python_requires=">= 3.8",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
